@@ -1,0 +1,35 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { Separator } from '@/shared/ui/separator';
+import { SidebarTrigger } from '@/shared/ui/sidebar';
+import { ThemeToggle } from '@/shared/ui/theme-toggle';
+import { ROUTES } from '@/shared/config/routes';
+
+const titles: Record<string, string> = {
+  [ROUTES.DASHBOARD]: 'Overview',
+  [ROUTES.USERS]: 'Users',
+  [ROUTES.ROLES]: 'Roles',
+  [ROUTES.PERMISSIONS]: 'Permissions',
+  [ROUTES.PROJECTS]: 'Projects',
+  [ROUTES.SKILLS]: 'Skills',
+  [ROUTES.EXPERIENCES]: 'Experiences',
+  [ROUTES.SITE_SETTINGS]: 'Site Settings',
+  [ROUTES.CONTACT_MESSAGES]: 'Contact Messages',
+};
+
+export function SiteHeader() {
+  const pathname = usePathname();
+  const title = titles[pathname] ?? 'Dashboard';
+
+  return (
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+      <SidebarTrigger className="-ml-1" />
+      <Separator orientation="vertical" className="mr-2 h-4" />
+      <h1 className="text-sm font-medium">{title}</h1>
+      <div className="ml-auto">
+        <ThemeToggle />
+      </div>
+    </header>
+  );
+}
