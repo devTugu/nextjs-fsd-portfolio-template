@@ -71,7 +71,7 @@ Default API: `http://localhost:3001/api/v1`
 ```bash
 git clone https://github.com/devTugu/nextjs-fsd-portfolio-template.git
 cd nextjs-fsd-portfolio-template
-cp .env.local.example .env.local
+cp .env.example .env.local
 npm install
 npm run dev
 ```

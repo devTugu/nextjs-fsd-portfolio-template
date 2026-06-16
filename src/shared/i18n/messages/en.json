@@ -1,0 +1,15 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "dashboard": "Overview",
+    "auditLogs": "Audit Logs"
+  }
+}

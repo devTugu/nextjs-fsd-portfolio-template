@@ -6,25 +6,29 @@ import { AUTH_COOKIE_NAMES } from '@/shared/lib/auth-cookies';
 const PROTECTED_PREFIX = ROUTES.DASHBOARD;
 const AUTH_ROUTES = [ROUTES.LOGIN];
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const hasSession =
-    request.cookies.get(AUTH_COOKIE_NAMES.SESSION)?.value === '1';
+export function createMiddlewareHandler() {
+  return function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    const hasSession =
+      request.cookies.get(AUTH_COOKIE_NAMES.SESSION)?.value === '1';
 
-  const isProtected = pathname.startsWith(PROTECTED_PREFIX);
-  const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
+    const isProtected = pathname.startsWith(PROTECTED_PREFIX);
+    const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
-  if (isProtected && !hasSession) {
-    return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
-  }
+    if (isProtected && !hasSession) {
+      return NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
+    }
 
-  if (isAuthRoute && hasSession) {
-    return NextResponse.redirect(new URL(ROUTES.DASHBOARD, request.url));
-  }
+    if (isAuthRoute && hasSession) {
+      return NextResponse.redirect(new URL(ROUTES.DASHBOARD, request.url));
+    }
 
-  return NextResponse.next();
+    return NextResponse.next();
+  };
 }
 
+export const middleware = createMiddlewareHandler();
+
 export const config = {
-  matcher: ['/dashboard/:path*', '/sign-in'],
+  matcher: ['/dashboard/:path*', '/dashboard', '/sign-in'],
 };

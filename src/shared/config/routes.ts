@@ -10,6 +10,7 @@ export const ROUTES = {
   EXPERIENCES: '/dashboard/experiences',
   SITE_SETTINGS: '/dashboard/site-settings',
   CONTACT_MESSAGES: '/dashboard/contact-messages',
+  AUDIT_LOGS: '/dashboard/audit-logs',
 } as const;
 
 export type Route = (typeof ROUTES)[keyof typeof ROUTES];

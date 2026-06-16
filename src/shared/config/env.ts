@@ -14,13 +14,22 @@ const serverEnvSchema = z.object({
     }),
 });
 
+const DEV_FALLBACK_URL = 'http://localhost:3001/api/v1';
+
+function failEnv(message: string, details: unknown): never {
+  console.error(message, details);
+  throw new Error(message);
+}
+
 const parsedClient = clientEnvSchema.safeParse({
   NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME ?? 'Admin Console',
   NODE_ENV: process.env.NODE_ENV,
 });
 
-if (!parsedClient.success && process.env.NODE_ENV === 'production') {
-  console.error('Invalid client environment variables:', parsedClient.error.flatten());
+if (!parsedClient.success) {
+  if (process.env.NODE_ENV === 'production') {
+    failEnv('Invalid client environment variables', parsedClient.error.flatten());
+  }
 }
 
 /** Client-safe configuration — browser traffic goes through the BFF proxy. */
@@ -33,16 +42,26 @@ export const env = {
 } as const;
 
 function resolveInternalUrl(): string {
-  const fallback = 'http://localhost:5001/api/v1';
-  const raw = process.env.API_INTERNAL_URL ?? fallback;
-  const parsed = serverEnvSchema.safeParse({ API_INTERNAL_URL: raw });
+  const nodeEnv = process.env.NODE_ENV ?? 'development';
+  const raw = process.env.API_INTERNAL_URL;
 
-  if (!parsed.success && process.env.NODE_ENV === 'production') {
-    console.error('Invalid server environment variables:', parsed.error.flatten());
-    return fallback;
+  if (!raw) {
+    if (nodeEnv === 'production') {
+      failEnv('API_INTERNAL_URL is required in production', {});
+    }
+    return DEV_FALLBACK_URL;
   }
 
-  return parsed.success ? parsed.data.API_INTERNAL_URL : raw;
+  const parsed = serverEnvSchema.safeParse({ API_INTERNAL_URL: raw });
+
+  if (!parsed.success) {
+    if (nodeEnv === 'production') {
+      failEnv('Invalid server environment variables', parsed.error.flatten());
+    }
+    return raw;
+  }
+
+  return parsed.data.API_INTERNAL_URL;
 }
 
 /** Server-only configuration for BFF route handlers. */

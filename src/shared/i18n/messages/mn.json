@@ -1,0 +1,15 @@
+{
+  "common": {
+    "save": "Хадгалах",
+    "cancel": "Цуцлах",
+    "loading": "Ачааллаж байна..."
+  },
+  "auth": {
+    "signIn": "Нэвтрэх",
+    "signOut": "Гарах"
+  },
+  "nav": {
+    "dashboard": "Хяналтын самбар",
+    "auditLogs": "Audit бүртгэл"
+  }
+}

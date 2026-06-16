@@ -46,4 +46,7 @@ export const API_ENDPOINTS = {
   DASHBOARD: {
     STATS: '/admin/dashboard/stats',
   },
+  AUDIT_LOGS: {
+    LIST: '/admin/audit-logs',
+  },
 } as const;

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Briefcase,
+  ClipboardList,
   FolderKanban,
   GraduationCap,
   KeyRound,
@@ -42,7 +43,12 @@ interface NavItem {
 }
 
 const systemNavItems: NavItem[] = [
-  { title: 'Overview', href: ROUTES.DASHBOARD, icon: LayoutDashboard },
+  {
+    title: 'Overview',
+    href: ROUTES.DASHBOARD,
+    icon: LayoutDashboard,
+    permission: PERMISSION_CODES.DASHBOARD_READ,
+  },
   {
     title: 'Users',
     href: ROUTES.USERS,
@@ -60,6 +66,12 @@ const systemNavItems: NavItem[] = [
     href: ROUTES.PERMISSIONS,
     icon: KeyRound,
     permission: PERMISSION_CODES.PERMISSION_READ,
+  },
+  {
+    title: 'Audit Logs',
+    href: ROUTES.AUDIT_LOGS,
+    icon: ClipboardList,
+    permission: PERMISSION_CODES.AUDIT_READ,
   },
 ];
 

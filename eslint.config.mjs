@@ -22,6 +22,8 @@ const eslintConfig = defineConfig([
         { type: "entities", pattern: "src/entities/**" },
         { type: "shared", pattern: "src/shared", mode: "folder" },
         { type: "shared", pattern: "src/shared/**" },
+        { type: "processes", pattern: "src/processes", mode: "folder" },
+        { type: "processes", pattern: "src/processes/**" },
       ],
       "boundaries/ignore": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
     },
@@ -35,7 +37,7 @@ const eslintConfig = defineConfig([
           rules: [
             {
               from: ["app"],
-              allow: ["widgets", "features", "entities", "shared", "app"],
+              allow: ["widgets", "features", "entities", "shared", "processes", "app"],
             },
             {
               from: ["widgets"],
@@ -53,6 +55,10 @@ const eslintConfig = defineConfig([
             {
               from: ["shared"],
               allow: ["shared"],
+            },
+            {
+              from: ["processes"],
+              allow: ["shared", "processes"],
             },
           ],
         },

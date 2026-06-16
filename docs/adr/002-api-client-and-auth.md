@@ -2,56 +2,29 @@
 
 ## Status
 
-Accepted
+**Superseded by [ADR 006 — BFF httpOnly auth](006-bff-httponly-auth.md)**
 
 ## Context
 
 The NestJS API returns a wrapped envelope (`{ success, data, message }`), uses JWT access/refresh tokens, and enforces RBAC on the server. The frontend needs a consistent HTTP layer and session handling.
 
-## Decision
+Originally this ADR described direct browser-to-API calls with localStorage token storage.
 
-### Axios client (`shared/api`)
+## Decision (historical)
 
-- Single Axios instance with request/response interceptors.
-- Unwrap Nest envelope in the client helper.
-- Attach `Authorization: Bearer` from token storage on each request.
-- On `401`: attempt refresh once, retry original request; on failure clear session and redirect to login.
-- On `403`: show permission-denied toast.
+This approach was replaced by the BFF pattern documented in ADR 006:
 
-### Token storage
+- Browser calls `/api/backend/*` (same-origin BFF proxy)
+- JWT stored in **httpOnly cookies** only
+- `API_INTERNAL_URL` is server-only (never `NEXT_PUBLIC_*`)
+- Axios uses `withCredentials: true`; no manual Bearer header
 
-- `accessToken` and `refreshToken` in `localStorage`.
-- `accessToken` also written to a cookie for Next.js middleware (dashboard route guard).
+For current implementation details, see:
 
-### TanStack Query
-
-- Entity-level hooks (`useUsers`, `useRoles`, …) own query keys and invalidation.
-- Mutations invalidate list/detail keys after successful writes.
-
-### Auth feature
-
-- `login` / `logout` mutations
-- `AuthGuard` for dashboard layout
-- `useAuthPermissions` derived from `/auth/me`
-- `TokenRefreshScheduler` for proactive refresh
+- [ADR 006 — BFF httpOnly auth](006-bff-httponly-auth.md)
+- [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
+- [docs/SECURITY.md](../SECURITY.md)
 
 ## Consequences
 
-### Positive
-
-- One place to handle API errors and token lifecycle
-- Entity hooks stay thin and testable
-- Works with companion NestJS template without API changes
-
-### Negative
-
-- Dual storage (localStorage + cookie) must stay in sync on login/logout
-- `NEXT_PUBLIC_API_BASE_URL` is public by design
-
-## Configuration
-
-```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api/v1
-```
-
-API must set `CORS_ORIGIN=http://localhost:3000` in development.
+See ADR 006 for current trade-offs.

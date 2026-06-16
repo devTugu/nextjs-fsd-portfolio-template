@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AUTH_COOKIE_NAMES } from '@/shared/lib/auth-cookies';
 import { fetchInternal } from '@/shared/lib/internal-api';
+import {
+  BffPathError,
+  isBffPathAllowed,
+  normalizeBffPath,
+} from '@/shared/config/bff-allowlist';
 
 const FORWARD_REQUEST_HEADERS = [
   'accept',
@@ -10,10 +15,6 @@ const FORWARD_REQUEST_HEADERS = [
 ] as const;
 
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
-
-function buildUpstreamPath(segments: string[]): string {
-  return `/${segments.join('/')}`;
-}
 
 async function readRequestBody(request: NextRequest): Promise<BodyInit | undefined> {
   if (!MUTATING_METHODS.has(request.method)) {
@@ -27,7 +28,33 @@ export async function proxyToBackend(
   request: NextRequest,
   pathSegments: string[]
 ): Promise<NextResponse> {
-  const upstreamPath = buildUpstreamPath(pathSegments);
+  let upstreamPath: string;
+
+  try {
+    upstreamPath = normalizeBffPath(pathSegments);
+  } catch (error) {
+    if (error instanceof BffPathError) {
+      return NextResponse.json(
+        { success: false, error: { code: 'FORBIDDEN', message: error.message } },
+        { status: 403 }
+      );
+    }
+    throw error;
+  }
+
+  if (!isBffPathAllowed(upstreamPath, request.method)) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'This API path is not allowed through the BFF proxy.',
+        },
+      },
+      { status: 403 }
+    );
+  }
+
   const accessToken = request.cookies.get(AUTH_COOKIE_NAMES.ACCESS_TOKEN)?.value;
 
   const headers = new Headers();
