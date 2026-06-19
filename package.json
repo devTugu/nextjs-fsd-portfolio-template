@@ -2,8 +2,8 @@
   "name": "nextjs-fsd-portfolio-template",
   "version": "3.0.0",
   "private": false,
-  "description": "Multi-brand RE marketing site + admin dashboard — Next.js 16 FSD, BFF httpOnly auth",
-  "author": "devTugu (Tuguldur Unurtsetseg)",
+  "description": "Production-ready Next.js 16 multi-brand RE marketing site + enterprise admin dashboard — FSD, BFF httpOnly auth, MFA, RBAC, GDPR",
+  "author": "Tuguldur Unurtsetseg <oz.toogii@gmail.com> (https://github.com/devTugu)",
   "license": "MIT",
   "repository": {
     "type": "git",

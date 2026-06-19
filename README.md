@@ -1,12 +1,31 @@
 # Multi-brand RE Admin + Marketing (Next.js + FSD)
 
 [![CI](https://github.com/devTugu/nextjs-fsd-portfolio-template/actions/workflows/ci.yml/badge.svg)](https://github.com/devTugu/nextjs-fsd-portfolio-template/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/github/license/devTugu/nextjs-fsd-portfolio-template)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-16-black)](https://nextjs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![FSD](https://img.shields.io/badge/Architecture-FSD-8B5CF6)](docs/ARCHITECTURE.md)
+[![Author](https://img.shields.io/badge/Author-devTugu-181717?logo=github)](https://github.com/devTugu)
 
-Production-ready **Next.js 16** multi-brand marketing site + admin dashboard with **Feature-Sliced Design**, **httpOnly BFF auth**, and the companion [nestjs-fsd-portfolio-template](https://github.com/devTugu/nestjs-fsd-portfolio-template) v3.0.0 API.
+Production-ready **Next.js 16** multi-brand **marketing site + admin dashboard** for restaurant/event conglomerates — **Feature-Sliced Design**, **BFF httpOnly auth**, **CSRF**, **MFA/OAuth**, **GDPR flows**, and **RBAC admin UI**.
+
+Pairs with [nestjs-fsd-portfolio-template](https://github.com/devTugu/nestjs-fsd-portfolio-template) **v3.0.0** (NestJS Clean Architecture API).
 
 ![Dashboard overview](docs/gallery/dashboard-overview.png)
+
+---
+
+## Why this template?
+
+| Use case | What you get |
+|----------|--------------|
+| Restaurant / event group | Multi-brand marketing pages + CMS admin |
+| Regulated / enterprise starter | BFF cookies, CSRF, MFA, audit UI, GDPR |
+| Client project kickoff | Fork, connect API, white-label in hours |
+| Learning FSD + BFF patterns | Real admin — not a toy dashboard demo |
+
+**Security model:** browser never stores JWT in `localStorage`; admin API calls go through `/api/backend/*` with allowlist + httpOnly session cookies.
 
 ---
 
@@ -115,6 +134,15 @@ Start at **[docs/README.md](docs/README.md)**
 
 ---
 
+## Releases
+
+| Version | Highlights |
+|---------|------------|
+| **[v3.0.0](CHANGELOG.md)** (current) | Multi-brand marketing + admin CMS (brands, news, history, team) |
+| v2.3.0 | Portfolio CMS UI — removed in v3 |
+
+---
+
 ## Scripts
 
 | Command | Description |
@@ -128,6 +156,12 @@ Start at **[docs/README.md](docs/README.md)**
 
 ---
 
+## Author
+
+**[devTugu](https://github.com/devTugu)** — Tuguldur Unurtsetseg (`oz.toogii@gmail.com`)
+
+---
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) — Copyright (c) 2026 Tuguldur Unurtsetseg (`devTugu`).
