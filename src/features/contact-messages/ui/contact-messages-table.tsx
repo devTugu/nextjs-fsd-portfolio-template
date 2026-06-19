@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import {
-  contactMessageColumns,
+  useContactMessageColumns,
   type ContactMessageOutput,
   type ContactMessageStatus,
   useContactMessages,
@@ -28,6 +29,11 @@ import { ContactDetailSheet } from './contact-detail-sheet';
 import { ContactDeleteDialog } from './contact-delete-dialog';
 
 export function ContactMessagesTable() {
+  const t = useTranslations('entities.contactMessages');
+  const tCommon = useTranslations('common');
+  const tTable = useTranslations('table');
+  const tStatus = useTranslations('status');
+  const contactMessageColumns = useContactMessageColumns();
   const { can } = useAuthPermissions();
   const {
     pagination,
@@ -61,19 +67,19 @@ export function ContactMessagesTable() {
       ...contactMessageColumns,
       {
         id: 'open',
-        header: () => <span className="sr-only">Open</span>,
+        header: () => <span className="sr-only">{tCommon('open')}</span>,
         cell: ({ row }) => (
           <button
             type="button"
             className="text-sm text-primary hover:underline"
             onClick={() => setSelected(row.original)}
           >
-            View
+            {tCommon('view')}
           </button>
         ),
       },
     ],
-    []
+    [contactMessageColumns, tCommon],
   );
 
   return (
@@ -82,20 +88,20 @@ export function ContactMessagesTable() {
         <DataTableToolbar
           initialSearch={search}
           onSearchChange={onSearchChange}
-          placeholder="Search messages..."
+          placeholder={t('searchPlaceholder')}
         >
           <Select
             value={status}
             onValueChange={(value) => setFilter('status', value)}
           >
             <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
+              <SelectValue placeholder={tTable('statusPlaceholder')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="NEW">NEW</SelectItem>
-              <SelectItem value="READ">READ</SelectItem>
-              <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+              <SelectItem value="all">{tTable('allStatuses')}</SelectItem>
+              <SelectItem value="NEW">{tStatus('new')}</SelectItem>
+              <SelectItem value="READ">{tStatus('read')}</SelectItem>
+              <SelectItem value="ARCHIVED">{tStatus('archived')}</SelectItem>
             </SelectContent>
           </Select>
         </DataTableToolbar>
@@ -106,7 +112,7 @@ export function ContactMessagesTable() {
           pagination={pagination}
           onPaginationChange={setPagination}
           isLoading={isLoading}
-          emptyContent={<DataTableEmpty title="No contact messages" />}
+          emptyContent={<DataTableEmpty title={t('emptyTitle')} />}
         />
         <ContactDetailSheet
           message={selected}

@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { Loader2, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useUploadMedia } from '@/entities/media/api/mutations';
 import { getErrorMessage } from '@/shared/api';
@@ -29,6 +30,9 @@ export function MediaUploadField<T extends FieldValues>({
   label,
   disabled,
 }: MediaUploadFieldProps<T>) {
+  const tCommon = useTranslations('common');
+  const tMedia = useTranslations('entities.media');
+  const tErrors = useTranslations('errors');
   const inputRef = useRef<HTMLInputElement>(null);
   const upload = useUploadMedia();
 
@@ -41,10 +45,10 @@ export function MediaUploadField<T extends FieldValues>({
           try {
             const result = await upload.mutateAsync(file);
             field.onChange(result.url);
-            toast.success('File uploaded');
+            toast.success(tMedia('toastUploaded'));
           } catch (error) {
             toast.error(getErrorMessage(error), {
-              description: 'Paste a URL manually or configure S3 on the API.',
+              description: tErrors('mediaUploadFallback'),
             });
           }
         };
@@ -56,7 +60,7 @@ export function MediaUploadField<T extends FieldValues>({
               <FormControl>
                 <Input
                   type="url"
-                  placeholder="https://..."
+                  placeholder={tMedia('urlPlaceholder')}
                   disabled={disabled}
                   {...field}
                   value={field.value ?? ''}
@@ -79,7 +83,7 @@ export function MediaUploadField<T extends FieldValues>({
                 size="icon"
                 disabled={disabled || upload.isPending}
                 onClick={() => inputRef.current?.click()}
-                aria-label="Upload file"
+                aria-label={tCommon('uploadFile')}
               >
                 {upload.isPending ? (
                   <Loader2 className="size-4 animate-spin" />

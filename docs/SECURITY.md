@@ -1,76 +1,56 @@
 # Security
 
-## Authentication (BFF + httpOnly cookies)
+Frontend security model: BFF proxy, httpOnly cookies, CSRF protection.
 
-- **Access / refresh tokens**: Stored in `httpOnly` cookies set by Next.js BFF routes (`/api/auth/*`). Not accessible to client JavaScript.
-- **Session hint**: Non-httpOnly `session=1` cookie + `sessionStorage` expiry used by middleware and proactive refresh scheduling.
-- **Browser API calls**: Same-origin `/api/backend/*` proxy attaches `Authorization: Bearer` from the access cookie server-side.
-- **Logout**: `POST /api/auth/logout` clears cookies and calls Nest logout when refresh token is present.
+## Authentication flow
 
-See [ADR 006: BFF httpOnly Cookie Authentication](./adr/006-bff-httponly-auth.md).
+1. User submits credentials on `/sign-in`
+2. `POST /api/auth/login` proxies to Nest `POST /auth/login`
+3. On success, BFF sets httpOnly cookies (access + refresh + session hint)
+4. Browser calls admin API via `/api/backend/*` — BFF attaches JWT from cookie
+5. `POST /api/auth/refresh` rotates tokens before expiry
+6. MFA challenge handled inline on sign-in page
 
-```mermaid
-flowchart LR
-  Browser --> BFF["Next.js /api/auth/*"]
-  Browser --> Proxy["Next.js /api/backend/*"]
-  BFF --> Cookies[httpOnly cookies]
-  Proxy -->|"Bearer from cookie"| API[NestJS API]
-```
+Tokens are **never** stored in `localStorage`.
 
-## Token refresh
+## BFF allowlist
 
-- Axios interceptor refreshes via `POST /api/auth/refresh` on `401` (single retry).
-- `TokenRefreshScheduler` proactively refreshes before expiry.
-- `SessionExpiryDialog` warns users ~2 minutes before session end.
-- Failed refresh → redirect to `/sign-in`.
+`src/shared/config/bff-allowlist.ts` defines exact backend paths the proxy forwards. Requests outside the allowlist return 403. Path traversal (`..`) is blocked.
 
-## Authorization (RBAC)
+Auth routes (`/api/auth/*`) are separate handlers, not proxied through the generic backend proxy.
 
-- `GET /api/auth/me` returns `roles[]` and `permissionCodes[]`.
-- UI gates actions with `useAuthPermissions().can(PERMISSION_CODES.*)`.
-- `SUPER_ADMIN` bypasses UI checks; API always enforces permissions.
+## CSRF
 
-Never rely on UI gating alone.
+State-changing BFF requests require CSRF token:
 
-## Route protection
+1. `GET /api/auth/csrf` returns token
+2. Client sends `X-CSRF-Token` header on POST/PATCH/DELETE
 
-[`middleware.ts`](../middleware.ts) checks the `session` cookie on `/dashboard/*` and redirects to `/sign-in`.
+Implemented in `src/shared/lib/csrf-client.ts` and BFF route handlers.
 
-`AuthGuard` hydrates from `/api/auth/me` after client mount.
+## Session protection
 
-## HTTP client
+`src/processes/proxy.ts` guards `/dashboard/*`:
 
-- Browser base URL: `/api/backend` (BFF proxy).
-- Server-only `API_INTERNAL_URL` for BFF → Nest (never expose to client).
-- Nest envelope unwrapped in `shared/api/client.ts`.
-- `403` responses show permission context in toast when available.
+- Redirects unauthenticated users to `/sign-in`
+- Redirects authenticated users away from `/sign-in` to `/dashboard`
 
-## Secrets
+Session check: `SESSION` cookie hint + `REFRESH_TOKEN` cookie present.
 
-- Never commit `.env.local`.
-- JWT secrets live on the Nest API only.
-- Only `NEXT_PUBLIC_*` vars are browser-visible (`NEXT_PUBLIC_APP_NAME`).
+## Environment
 
-## Headers
+| Variable | Scope | Purpose |
+|----------|-------|---------|
+| `API_INTERNAL_URL` | Server only | Nest API base (must end with `/api/v1`) |
+| `NEXT_PUBLIC_*` | Client | Display names only — no secrets |
 
-[`next.config.ts`](../next.config.ts):
+Required in production: `API_INTERNAL_URL`.
 
-- **Development:** CSP is not sent (Next.js dev/Turbopack requires inline scripts).
-- **Production:** `default-src 'self'`, `script-src 'self' 'unsafe-inline'`, `connect-src 'self'`, plus `font-src` / `img-src` for UI assets.
-- `X-Frame-Options: DENY`
-- `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: strict-origin-when-cross-origin`
+## OAuth
 
-## Production checklist
+Optional OIDC login via `/api/auth/oauth/authorize` and callback page at `/oauth/callback`.
 
-- [ ] HTTPS everywhere
-- [ ] `API_INTERNAL_URL` points to private/reachable Nest URL from Next server
-- [ ] Nest `CORS_ORIGIN` locked to Next origin (for Swagger/direct API only)
-- [ ] `SWAGGER_ENABLED=false` on API
-- [ ] Strong JWT secrets (32+ chars)
-- [ ] `npm audit` on both repos
-- [ ] Review RBAC seeds before production
+## Related
 
-## Reporting issues
-
-Open a private security advisory on GitHub or contact the maintainer listed in the repository.
+- Backend [Security](https://github.com/devTugu/nestjs-fsd-portfolio-template/blob/main/docs/SECURITY.md)
+- [ADR 002](adr/002-bff-httponly-auth.md)

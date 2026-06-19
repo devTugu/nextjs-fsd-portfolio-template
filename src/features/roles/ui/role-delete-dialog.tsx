@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { type Role, useDeleteRole } from '@/entities/role';
 import { getErrorMessage } from '@/shared/api';
@@ -26,13 +27,15 @@ export function RoleDeleteDialog({
   open,
   onOpenChange,
 }: RoleDeleteDialogProps) {
+  const t = useTranslations('entities.roles');
+  const tCommon = useTranslations('common');
   const deleteRole = useDeleteRole();
 
   const handleDelete = async () => {
     if (!role) return;
     try {
       await deleteRole.mutateAsync(role.id);
-      toast.success('Role deleted');
+      toast.success(t('toastDeleted'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -43,14 +46,14 @@ export function RoleDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete role?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Remove role {role?.name}. Users may lose access.
+            {t('deleteDescription', { name: role?.name ?? '' })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleteRole.isPending}>
-            Cancel
+            {tCommon('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
@@ -60,7 +63,7 @@ export function RoleDeleteDialog({
             {deleteRole.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            Delete
+            {tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

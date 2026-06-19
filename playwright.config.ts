@@ -12,14 +12,18 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    command: 'npm run start',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      API_INTERNAL_URL:
-        process.env.API_INTERNAL_URL ?? 'http://localhost:3001/api/v1',
-    },
-  },
+  ...(process.env.PLAYWRIGHT_SKIP_WEBSERVER
+    ? {}
+    : {
+        webServer: {
+          command: 'npm run start',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120_000,
+          env: {
+            API_INTERNAL_URL:
+              process.env.API_INTERNAL_URL ?? 'http://localhost:3001/api/v1',
+          },
+        },
+      }),
 });

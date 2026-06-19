@@ -1,6 +1,7 @@
 'use client';
 
 import { ShieldOff } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PermissionCode } from '@/shared/config/permissions';
 import {
   Card,
@@ -21,6 +22,7 @@ export function RequirePermission({
   children,
 }: RequirePermissionProps) {
   const { can } = useAuthPermissions();
+  const t = useTranslations('errors');
 
   if (!can(permission)) {
     return (
@@ -28,15 +30,15 @@ export function RequirePermission({
         <CardHeader>
           <div className="flex items-center gap-2">
             <ShieldOff className="size-5 text-muted-foreground" />
-            <CardTitle>Access denied</CardTitle>
+            <CardTitle>{t('accessDeniedTitle')}</CardTitle>
           </div>
           <CardDescription>
-            You do not have permission to view this page ({permission}).
+            {t('accessDeniedDescription', { permission })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Contact an administrator if you believe this is a mistake.
+            {t('accessDeniedContact')}
           </p>
         </CardContent>
       </Card>

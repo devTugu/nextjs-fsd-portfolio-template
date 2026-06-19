@@ -18,4 +18,18 @@ describe('env', () => {
       void serverEnv.API_INTERNAL_URL;
     }).rejects.toThrow('API_INTERNAL_URL is required in production');
   });
+
+  it('exposes brand name from NEXT_PUBLIC_BRAND_NAME', async () => {
+    vi.stubEnv('NEXT_PUBLIC_BRAND_NAME', 'Acme Public');
+    vi.resetModules();
+    const { env } = await import('./env');
+    expect(env.BRAND_NAME).toBe('Acme Public');
+  });
+
+  it('exposes site url when NEXT_PUBLIC_SITE_URL is set', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://acme.example.com');
+    vi.resetModules();
+    const { env } = await import('./env');
+    expect(env.SITE_URL).toBe('https://acme.example.com');
+  });
 });

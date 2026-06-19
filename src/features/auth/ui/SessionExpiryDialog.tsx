@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { refreshClientSession } from '@/shared/lib/bff-refresh';
 import { sessionHint } from '@/shared/lib/session-hint';
 import {
   AlertDialog,
@@ -12,11 +14,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/shared/ui/alert-dialog';
-import type { ApiEnvelope } from '@/shared/api/types';
 
 const WARNING_BEFORE_MS = 2 * 60 * 1000;
 
 export function SessionExpiryDialog() {
+  const t = useTranslations('auth');
   const [open, setOpen] = useState(false);
   const [extending, setExtending] = useState(false);
 
@@ -42,19 +44,10 @@ export function SessionExpiryDialog() {
   const extendSession = async () => {
     setExtending(true);
     try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (!response.ok) {
+      const refreshed = await refreshClientSession({ redirectOnFailure: false });
+      if (refreshed) {
         setOpen(false);
-        return;
       }
-      const envelope = (await response.json()) as ApiEnvelope<{
-        expiresIn: number;
-      }>;
-      sessionHint.updateExpiresAt(envelope.data.expiresIn);
-      setOpen(false);
     } finally {
       setExtending(false);
     }
@@ -64,15 +57,17 @@ export function SessionExpiryDialog() {
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Session expiring soon</AlertDialogTitle>
+          <AlertDialogTitle>{t('sessionExpiringTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Your session will expire in a few minutes. Extend to stay signed in.
+            {t('sessionExpiringDescription')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={extending}>Dismiss</AlertDialogCancel>
+          <AlertDialogCancel disabled={extending}>
+            {t('dismiss')}
+          </AlertDialogCancel>
           <AlertDialogAction onClick={extendSession} disabled={extending}>
-            {extending ? 'Extending…' : 'Extend session'}
+            {extending ? t('extending') : t('extendSession')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

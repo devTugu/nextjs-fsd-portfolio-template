@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import { useUsers, type UserOutput } from "@/entities/user";
-import { userColumns } from "@/entities/user/ui/user-columns";
+import { useUserColumns } from "@/entities/user/ui/user-columns";
 import { useAuthPermissions } from "@/features/auth";
 import {
   PERMISSION_CODES,
@@ -25,9 +26,11 @@ import { UserDeleteDialog } from "@/features/users/ui/user-delete-dialog";
 function ClickableRoleBadges({
   user,
   onClick,
+  noRolesLabel,
 }: {
   user: UserOutput;
   onClick: () => void;
+  noRolesLabel: string;
 }) {
   if (user.roles.length === 0) {
     return (
@@ -35,7 +38,7 @@ function ClickableRoleBadges({
         type="button"
         onClick={onClick}
         className="text-sm text-muted-foreground hover:text-foreground">
-        No roles
+        {noRolesLabel}
       </button>
     );
   }
@@ -58,7 +61,11 @@ function ClickableRoleBadges({
 }
 
 export function UsersTable() {
+  const t = useTranslations("entities.users");
+  const tCommon = useTranslations("common");
+  const tTable = useTranslations("table");
   const { can } = useAuthPermissions();
+  const userColumns = useUserColumns();
   const { pagination, setPagination, onSearchChange, queryParams, search } =
     useTableSearchParams();
   const { data, isLoading, isError, error, refetch } = useUsers(queryParams);
@@ -74,6 +81,7 @@ export function UsersTable() {
             cell: ({ row }: { row: { original: UserOutput } }) => (
               <ClickableRoleBadges
                 user={row.original}
+                noRolesLabel={tTable("noRoles")}
                 onClick={() =>
                   setSheetState({
                     mode: "edit",
@@ -89,7 +97,9 @@ export function UsersTable() {
       }),
       {
         id: "actions",
-        header: () => <span className="sr-only">Actions</span>,
+        header: () => (
+          <span className="sr-only">{tCommon("actions")}</span>
+        ),
         cell: ({ row }) => (
           <AdminTableActions
             name={row.original.email}
@@ -107,7 +117,7 @@ export function UsersTable() {
         ),
       },
     ],
-    [],
+    [userColumns, tCommon, tTable],
   );
 
   const canCreate = can(PERMISSION_CODES.USER_CREATE);
@@ -115,10 +125,13 @@ export function UsersTable() {
   return (
     <DataTableQueryState isError={isError} error={error} refetch={refetch}>
       <div className="space-y-4">
-        <DataTableToolbar initialSearch={search} onSearchChange={onSearchChange}>
+        <DataTableToolbar
+          initialSearch={search}
+          onSearchChange={onSearchChange}
+          placeholder={t("searchPlaceholder")}>
           {canCreate ? (
             <Button size="sm" onClick={() => setSheetState({ mode: "create" })}>
-              Add user
+              {t("addUser")}
             </Button>
           ) : null}
         </DataTableToolbar>
@@ -131,14 +144,14 @@ export function UsersTable() {
           isLoading={isLoading}
           emptyContent={
             <DataTableEmpty
-              title="No users found"
-              description="Create a user or adjust your search."
+              title={t("emptyTitle")}
+              description={t("emptyDescription")}
               action={
                 canCreate ? (
                   <Button
                     size="sm"
                     onClick={() => setSheetState({ mode: "create" })}>
-                    Add user
+                    {t("addUser")}
                   </Button>
                 ) : undefined
               }

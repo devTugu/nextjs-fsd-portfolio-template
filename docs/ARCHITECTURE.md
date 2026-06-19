@@ -1,80 +1,62 @@
 # Architecture
 
-## Overview
+Next.js 16 app using **Feature-Sliced Design (FSD)** with a **Backend-for-Frontend (BFF)** auth layer.
 
-This template is a **Feature-Sliced Design (FSD)** admin console. It consumes a versioned NestJS RBAC API through a **Backend-for-Frontend (BFF)** layer. JWT tokens never reach browser JavaScript.
-
-## Layer responsibilities
-
-| Layer | Responsibility | Examples |
-|-------|----------------|----------|
-| `app/` | Routing, layouts, BFF API routes | `app/dashboard/users/page.tsx`, `app/api/auth/login/route.ts` |
-| `widgets/` | Reusable composite blocks | `data-table`, `admin-form-sheet`, `app-sidebar` |
-| `features/` | User scenarios and flows | `auth`, `users`, `roles`, `permissions` |
-| `entities/` | Business nouns + API | `user`, `role`, `permission` hooks and types |
-| `shared/` | Framework-agnostic utilities | API client, UI kit, config, hooks |
-| `processes/` | App-wide cross-cutting | providers, route constants, middleware |
-
-## Data flow
+## Layer structure
 
 ```
-Page (app)
-  → Feature UI (table, sheet)
-    → Entity hook (TanStack Query)
-      → shared/api (Axios → /api/backend/*)
-        → BFF proxy (allowlisted paths)
-          → NestJS /api/v1/* (Bearer from httpOnly cookie)
+app/           # Next.js App Router (routes, layouts, API routes)
+widgets/       # Composed UI blocks (sidebar, marketing sections)
+features/      # User interactions (auth, brands CRUD, MFA)
+entities/      # Business models + API clients
+shared/        # Config, UI kit, i18n, utilities
+processes/     # App-wide providers, proxy handler
 ```
 
-Auth routes bypass the backend proxy:
+**Import rule:** upper layers import from lower layers only (`app` → `widgets` → `features` → `entities` → `shared`).
 
+## Request flow
+
+```mermaid
+sequenceDiagram
+  participant Browser
+  participant NextApp as Next.js
+  participant BFF as BFF /api/backend
+  participant Nest as NestJS API
+
+  Note over Browser,Nest: Marketing (SSR)
+  Browser->>NextApp: GET /
+  NextApp->>Nest: fetchInternal /site-settings, /brands
+  Nest-->>NextApp: JSON envelope
+  NextApp-->>Browser: HTML
+
+  Note over Browser,Nest: Admin (client)
+  Browser->>BFF: PATCH /api/backend/admin/brands/1
+  BFF->>Nest: Forward with httpOnly cookie JWT
+  Nest-->>BFF: Response
+  BFF-->>Browser: JSON
 ```
-Browser → /api/auth/login|refresh|logout|me → NestJS /auth/*
-```
 
-## Key widgets
+## BFF pattern
 
-### `AdminFormSheet`
+- Browser never holds access tokens in `localStorage`
+- Auth cookies set by `/api/auth/*` route handlers
+- Admin API calls go through `/api/backend/*` with allowlist (`bff-allowlist.ts`)
+- Server components call Nest API directly via `API_INTERNAL_URL`
 
-Right-side sheet shell with sticky header, scrollable body, and footer (Cancel / Save). Used by all create/edit flows.
+## Key modules
 
-### `PermissionPicker`
+| Area | Location |
+|------|----------|
+| Marketing pages | `app/(marketing)/` |
+| Admin dashboard | `app/dashboard/` |
+| Auth routes | `app/api/auth/` |
+| Public API client | `src/entities/public-api/public-server.ts` |
+| Proxy redirects | `src/processes/proxy.ts` |
+| Route constants | `src/shared/config/routes.ts` |
 
-Grouped permission selector (Users / Roles / Permissions) with search, select-all per group, and selection summary.
+## Related
 
-### `DataTable`
-
-Server-driven pagination via URL search params (`?page&limit&search`). Toolbar debounces search without navigation loops.
-
-## Auth flow
-
-1. User signs in via `POST /api/auth/login` (BFF) → Nest validates credentials → BFF sets **httpOnly** `accessToken` + `refreshToken` cookies and a non-httpOnly `session=1` hint.
-2. Axios calls `/api/backend/*` with `withCredentials: true` — no Bearer header in JavaScript.
-3. BFF proxy attaches `Authorization: Bearer` from the httpOnly access cookie server-side.
-4. On `401`, client calls `/api/auth/refresh` once; on failure, redirect to `/sign-in`.
-5. `TokenRefreshScheduler` proactively refreshes before expiry.
-6. `AuthGuard` wraps dashboard layout; loads `/api/auth/me` for `permissionCodes`.
-7. Next.js middleware checks `session=1` for route redirects; real auth enforced by AuthGuard + API.
-
-See [ADR 006 — BFF httpOnly auth](adr/006-bff-httponly-auth.md).
-
-## RBAC gating
-
-`useAuthPermissions().can(code)` checks:
-
-1. User has `SUPER_ADMIN` role → allow all
-2. Else `permissionCodes` from `/auth/me` must include the code
-
-## File naming
-
-- Components: `PascalCase.tsx` (`user-manage-sheet.tsx` exports `UserManageSheet`)
-- Hooks/utils: `kebab-case.ts`
-- One primary export per file where possible
-
-## Related ADRs
-
-- [001 — Feature-Sliced Design](adr/001-feature-sliced-design.md)
-- [002 — API client and auth](adr/002-api-client-and-auth.md) (superseded by 006)
-- [006 — BFF httpOnly auth](adr/006-bff-httponly-auth.md)
-- [007 — Dashboard stats](adr/007-dashboard-stats-endpoint.md)
-- [008 — Regulated enterprise roadmap](adr/008-regulated-enterprise-roadmap.md)
+- [Security](SECURITY.md)
+- [ADR 001](adr/001-feature-sliced-design.md)
+- [ADR 002](adr/002-bff-httponly-auth.md)

@@ -1,5 +1,3 @@
 export { Providers } from './providers';
-export { createMiddlewareHandler, middleware } from './middleware';
+export { createProxyHandler, proxy } from './proxy';
 export * from './routes';
-
-

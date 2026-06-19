@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
   createUserSchema,
@@ -14,9 +15,11 @@ import {
   useCreateUser,
   useUpdateUser,
   useUser,
+  useExportUserData,
+  useAnonymizeUser,
 } from "@/entities/user";
 import { useAssignRole, useRoles, useUnassignRole } from "@/entities/role";
-import { useAuthPermissions } from "@/features/auth";
+import { useAuthPermissions, useAuthStore } from "@/features/auth";
 import {
   PERMISSION_CODES,
   SUPER_ADMIN_ROLE,
@@ -73,10 +76,12 @@ function RoleBadge({
   name,
   onRemove,
   canRemove,
+  removeAriaLabel,
 }: {
   name: string;
   onRemove?: () => void;
   canRemove: boolean;
+  removeAriaLabel: string;
 }) {
   return (
     <Badge
@@ -88,7 +93,7 @@ function RoleBadge({
           type="button"
           onClick={onRemove}
           className="rounded-sm p-0.5 hover:bg-background/20"
-          aria-label={`Remove ${name}`}>
+          aria-label={removeAriaLabel}>
           <X className="size-3" />
         </button>
       ) : null}
@@ -97,11 +102,19 @@ function RoleBadge({
 }
 
 export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
+  const t = useTranslations("entities.users");
+  const tCommon = useTranslations("common");
+  const tAuth = useTranslations("auth");
+  const tTable = useTranslations("table");
+  const tVal = useTranslations("validation");
   const { can } = useAuthPermissions();
   const createUser = useCreateUser();
   const updateUser = useUpdateUser();
+  const exportUserData = useExportUserData();
+  const anonymizeUser = useAnonymizeUser();
   const assignRole = useAssignRole();
   const unassignRole = useUnassignRole();
+  const currentUser = useAuthStore((state) => state.user);
 
   const isCreate = state?.mode === "create";
   const isEdit = state?.mode === "edit";
@@ -124,6 +137,8 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
     null,
   );
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [anonymizeOpen, setAnonymizeOpen] = useState(false);
+  const [anonymizeConfirmEmail, setAnonymizeConfirmEmail] = useState("");
 
   const sheetId = !open
     ? ""
@@ -142,13 +157,31 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
   const selectedRoleId =
     roleSelection?.sheetId === sheetId ? roleSelection.roleId : "";
 
+  const validationMessages = useMemo(
+    () => ({
+      invalidEmail: tVal("invalidEmail"),
+      passwordMinLength: tVal("passwordMinLength"),
+    }),
+    [tVal],
+  );
+
+  const createSchema = useMemo(
+    () => createUserSchema(validationMessages),
+    [validationMessages],
+  );
+
+  const updateSchema = useMemo(
+    () => updateUserSchema(validationMessages),
+    [validationMessages],
+  );
+
   const createForm = useForm<CreateUserFormValues>({
-    resolver: zodResolver(createUserSchema),
+    resolver: zodResolver(createSchema),
     defaultValues: { email: "", password: "", isActive: true },
   });
 
   const editForm = useForm<UpdateUserFormValues>({
-    resolver: zodResolver(updateUserSchema),
+    resolver: zodResolver(updateSchema),
     defaultValues: { password: "", isActive: true },
   });
 
@@ -183,11 +216,14 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
   const canAssign = can(PERMISSION_CODES.ROLE_CREATE);
   const canUnassign = can(PERMISSION_CODES.ROLE_DELETE);
   const canDelete = can(PERMISSION_CODES.USER_DELETE);
+  const canExport = can(PERMISSION_CODES.USER_READ);
+  const canAnonymize =
+    canDelete && user !== null && currentUser?.id !== user.id;
 
   const onCreateSubmit = async (values: CreateUserFormValues) => {
     try {
       await createUser.mutateAsync(values);
-      toast.success("User created");
+      toast.success(t("toastCreated"));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -202,7 +238,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
         ...(values.password ? { password: values.password } : {}),
       };
       await updateUser.mutateAsync({ id: user.id, data: payload });
-      toast.success("User updated");
+      toast.success(t("toastUpdated"));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -216,7 +252,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
         userId: user.id,
         roleId: Number(selectedRoleId),
       });
-      toast.success("Role assigned");
+      toast.success(t("toastRoleAssigned"));
       setRoleSelection({ sheetId, roleId: "" });
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -230,25 +266,100 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
         userId: user.id,
         roleId: unassignTarget.roleId,
       });
-      toast.success("Role removed");
+      toast.success(t("toastRoleRemoved"));
       setUnassignTarget(null);
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
   };
 
-  const isPending = createUser.isPending || updateUser.isPending;
+  const handleExportData = async () => {
+    if (!user) return;
+    try {
+      await exportUserData.mutateAsync(user.id);
+      toast.success(t("toastExported"));
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const handleAnonymize = async () => {
+    if (!user) return;
+    if (anonymizeConfirmEmail.trim() !== user.email) {
+      toast.error(t("anonymizeConfirmLabel"));
+      return;
+    }
+    try {
+      await anonymizeUser.mutateAsync(user.id);
+      toast.success(t("toastAnonymized"));
+      setAnonymizeOpen(false);
+      setAnonymizeConfirmEmail("");
+      onOpenChange(false);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const isPending =
+    createUser.isPending ||
+    updateUser.isPending ||
+    exportUserData.isPending ||
+    anonymizeUser.isPending;
   const formId = isCreate ? "user-create-form" : "user-edit-form";
 
   const showProfileFooter = isCreate || (isEdit && activeTab === "profile");
   const footer =
     showProfileFooter && ((isCreate && canCreate) || (isEdit && canUpdate)) ? (
       <div className="space-y-4">
+        {isEdit && (canExport || canAnonymize || canDelete) ? (
+          <div className="rounded-md border p-3">
+            <p className="text-sm font-medium">{t("privacyTitle")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("privacyDescription")}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {canExport ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportData}
+                  disabled={exportUserData.isPending}>
+                  {exportUserData.isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
+                  {exportUserData.isPending
+                    ? t("exportingData")
+                    : t("exportData")}
+                </Button>
+              ) : null}
+              {canAnonymize ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setAnonymizeConfirmEmail("");
+                    setAnonymizeOpen(true);
+                  }}>
+                  {t("anonymizePii")}
+                </Button>
+              ) : null}
+            </div>
+            {!canAnonymize && canDelete && currentUser?.id === user?.id ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {t("anonymizeSelfBlocked")}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         {isEdit && canDelete ? (
           <div className="rounded-md border border-destructive/30 p-3">
-            <p className="text-sm font-medium text-destructive">Danger zone</p>
+            <p className="text-sm font-medium text-destructive">
+              {tCommon("dangerZone")}
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Permanently delete this user account.
+              {t("dangerZoneDescription")}
             </p>
             <Button
               type="button"
@@ -256,7 +367,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
               size="sm"
               className="mt-2"
               onClick={() => setDeleteOpen(true)}>
-              Delete user
+              {t("deleteUser")}
             </Button>
           </div>
         ) : null}
@@ -266,11 +377,11 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isPending}>
-            Cancel
+            {tCommon("cancel")}
           </Button>
           <Button type="submit" form={formId} disabled={isPending}>
             {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {isCreate ? "Create" : "Save"}
+            {isCreate ? tCommon("create") : tCommon("save")}
           </Button>
         </div>
       </div>
@@ -280,7 +391,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
           type="button"
           variant="outline"
           onClick={() => onOpenChange(false)}>
-          Close
+          {tCommon("close")}
         </Button>
       </div>
     ) : null;
@@ -290,15 +401,20 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
       <AdminFormSheet
         open={open}
         onOpenChange={onOpenChange}
-        title={isCreate ? "Create user" : (user?.email ?? "Edit user")}
+        title={
+          isCreate
+            ? t("createTitle")
+            : (user?.email ?? t("editTitle"))
+        }
         description={
           isCreate
-            ? "Add a new user account with email and password."
+            ? t("createDescription")
             : activeTab === "roles"
-              ? "Manage role assignments for this user."
-              : "Change password or account status."
+              ? t("editRolesDescription")
+              : t("editProfileDescription")
         }
         size="md"
+        showContentLocale={false}
         footer={footer}>
         {isCreate ? (
           <Form {...createForm}>
@@ -311,7 +427,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{tAuth("email")}</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -324,7 +440,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{tAuth("password")}</FormLabel>
                     <FormControl>
                       <Input type="password" {...field} />
                     </FormControl>
@@ -338,9 +454,9 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                 render={({ field }) => (
                   <FormItem className="flex items-center justify-between rounded-md border p-3">
                     <div className="space-y-0.5">
-                      <FormLabel>Active account</FormLabel>
+                      <FormLabel>{t("activeAccount")}</FormLabel>
                       <p className="text-xs text-muted-foreground">
-                        Inactive users cannot sign in.
+                        {t("activeAccountHint")}
                       </p>
                     </div>
                     <FormControl>
@@ -365,10 +481,10 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
             }>
             <TabsList className="w-full">
               <TabsTrigger value="profile" className="flex-1">
-                Profile
+                {t("tabProfile")}
               </TabsTrigger>
               <TabsTrigger value="roles" className="flex-1">
-                Roles
+                {tTable("roles")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="profile" className="mt-4">
@@ -378,7 +494,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                   onSubmit={editForm.handleSubmit(onEditSubmit)}
                   className="space-y-4">
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{tAuth("email")}</FormLabel>
                     <Input value={user?.email ?? ""} disabled readOnly />
                   </FormItem>
                   <FormField
@@ -386,7 +502,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>New password (optional)</FormLabel>
+                        <FormLabel>{t("newPasswordOptional")}</FormLabel>
                         <FormControl>
                           <Input type="password" {...field} />
                         </FormControl>
@@ -400,9 +516,9 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                     render={({ field }) => (
                       <FormItem className="flex items-center justify-between rounded-md border p-3">
                         <div className="space-y-0.5">
-                          <FormLabel>Active account</FormLabel>
+                          <FormLabel>{t("activeAccount")}</FormLabel>
                           <p className="text-xs text-muted-foreground">
-                            Inactive users cannot sign in.
+                            {t("activeAccountHint")}
                           </p>
                         </div>
                         <FormControl>
@@ -419,7 +535,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
             </TabsContent>
             <TabsContent value="roles" className="mt-4 space-y-4">
               <div className="space-y-2">
-                <p className="text-sm font-medium">Current roles</p>
+                <p className="text-sm font-medium">{t("currentRoles")}</p>
                 {user && user.roles.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {user.roles.map((roleName) => {
@@ -429,6 +545,9 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                           key={roleName}
                           name={roleName}
                           canRemove={canUnassign && roleId !== undefined}
+                          removeAriaLabel={tCommon("removeAriaLabel", {
+                            name: roleName,
+                          })}
                           onRemove={
                             roleId !== undefined
                               ? () =>
@@ -444,13 +563,13 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No roles assigned.
+                    {t("emptyRoles")}
                   </p>
                 )}
               </div>
               {canAssign ? (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium">Add role</p>
+                  <p className="text-sm font-medium">{t("addRole")}</p>
                   <div className="flex gap-2">
                     <Select
                       value={selectedRoleId}
@@ -458,7 +577,7 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                         setRoleSelection({ sheetId, roleId })
                       }>
                       <SelectTrigger className="flex-1">
-                        <SelectValue placeholder="Select role" />
+                        <SelectValue placeholder={t("selectRole")} />
                       </SelectTrigger>
                       <SelectContent>
                         {assignableRoles.map((role) => (
@@ -475,12 +594,12 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
                       {assignRole.isPending ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : null}
-                      Add
+                      {tCommon("add")}
                     </Button>
                   </div>
                   {assignableRoles.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
-                      All available roles are already assigned.
+                      {t("allRolesAssigned")}
                     </p>
                   ) : null}
                 </div>
@@ -495,15 +614,18 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
         onOpenChange={(dialogOpen) => !dialogOpen && setUnassignTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove role?</AlertDialogTitle>
+            <AlertDialogTitle>{t("removeRoleTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Remove {unassignTarget?.roleName} from {user?.email}.
+              {t("removeRoleDescription", {
+                roleName: unassignTarget?.roleName ?? "",
+                email: user?.email ?? "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tCommon("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleUnassignRole}>
-              Remove
+              {tCommon("remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -515,6 +637,52 @@ export function UserManageSheet({ state, onOpenChange }: UserManageSheetProps) {
         onOpenChange={setDeleteOpen}
         onDeleted={() => onOpenChange(false)}
       />
+
+      <AlertDialog
+        open={anonymizeOpen}
+        onOpenChange={(dialogOpen) => {
+          setAnonymizeOpen(dialogOpen);
+          if (!dialogOpen) setAnonymizeConfirmEmail("");
+        }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("anonymizeTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("anonymizeDescription", { email: user?.email ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <label
+              htmlFor="anonymize-confirm-email"
+              className="text-sm font-medium">
+              {t("anonymizeConfirmLabel")}
+            </label>
+            <Input
+              id="anonymize-confirm-email"
+              value={anonymizeConfirmEmail}
+              onChange={(event) => setAnonymizeConfirmEmail(event.target.value)}
+              placeholder={user?.email ?? ""}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={anonymizeUser.isPending}>
+              {tCommon("cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleAnonymize}
+              disabled={
+                anonymizeUser.isPending ||
+                anonymizeConfirmEmail.trim() !== (user?.email ?? "")
+              }
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {anonymizeUser.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
+              {t("anonymizePii")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

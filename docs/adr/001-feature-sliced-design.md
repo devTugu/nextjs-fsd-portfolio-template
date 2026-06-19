@@ -6,45 +6,29 @@ Accepted
 
 ## Context
 
-The admin console must scale as new RBAC resources and UI flows are added. A flat `components/` folder leads to unclear dependencies and duplicated API logic.
+The admin UI has many domains (users, brands, news, navigation). We need scalable folder structure with clear import boundaries.
 
 ## Decision
 
-Adopt **Feature-Sliced Design** with layers: `app`, `widgets`, `features`, `entities`, `shared`, `processes`.
-
-### Import rules
+Adopt FSD layers:
 
 ```
-app → widgets, features, entities, shared, processes
-widgets → features, entities, shared
-features → entities, shared
-entities → shared only
+app → widgets → features → entities → shared
 ```
 
-### Slice examples
+- **entities:** API types, queries, column definitions
+- **features:** CRUD tables, forms, dialogs
+- **widgets:** Sidebar, marketing sections, composed layouts
+- **shared:** UI kit, config, i18n, utilities
 
-| Slice | Location | Responsibility |
-|-------|----------|----------------|
-| `user` entity | `entities/user` | Types, Zod schemas, TanStack Query hooks, table columns |
-| `users` feature | `features/users` | `UsersTable`, `UserManageSheet` |
-| `data-table` widget | `widgets/data-table` | Generic table + pagination + toolbar |
-
-Pages in `app/` remain thin and only compose feature exports.
+Cross-slice imports use public API (`index.ts` barrels).
 
 ## Consequences
 
-### Positive
+**Positive:** Predictable placement for new CMS sections; easy onboarding.
 
-- Predictable placement for new code
-- Entities reusable across multiple features
-- Easier onboarding for teams familiar with FSD
+**Negative:** More folders than a flat `components/` tree.
 
-### Negative
+## Related
 
-- More folders than a small demo app needs
-- Requires discipline to avoid cross-feature imports
-
-## References
-
-- [Feature-Sliced Design](https://feature-sliced.design/)
-- [docs/ARCHITECTURE.md](../ARCHITECTURE.md)
+- [Architecture](../ARCHITECTURE.md)

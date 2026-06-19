@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   createRoleSchema,
@@ -41,6 +42,11 @@ interface RoleManageSheetProps {
 }
 
 export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
+  const t = useTranslations('entities.roles');
+  const tCommon = useTranslations('common');
+  const tTable = useTranslations('table');
+  const tErrors = useTranslations('errors');
+  const tVal = useTranslations('validation');
   const { can } = useAuthPermissions();
   const createRole = useCreateRole();
   const updateRole = useUpdateRole();
@@ -52,13 +58,25 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
   const role = isEdit ? state.role : null;
   const open = state !== null;
 
+  const validationMessages = useMemo(
+    () => ({ nameMinLength: tVal('nameMinLength') }),
+    [tVal],
+  );
+
+  const createSchema = useMemo(
+    () => createRoleSchema(validationMessages),
+    [validationMessages],
+  );
+
+  const updateSchema = useMemo(() => updateRoleSchema(), []);
+
   const createForm = useForm<CreateRoleFormValues>({
-    resolver: zodResolver(createRoleSchema),
+    resolver: zodResolver(createSchema),
     defaultValues: { name: '', description: '', permissionIds: [] },
   });
 
   const editForm = useForm<UpdateRoleFormValues>({
-    resolver: zodResolver(updateRoleSchema),
+    resolver: zodResolver(updateSchema),
     defaultValues: { description: '', permissionIds: [] },
   });
 
@@ -85,7 +103,7 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
   const onCreateSubmit = async (values: CreateRoleFormValues) => {
     try {
       await createRole.mutateAsync(values);
-      toast.success('Role created');
+      toast.success(t('toastCreated'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -96,7 +114,7 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
     if (!role) return;
     try {
       await updateRole.mutateAsync({ id: role.id, data: values });
-      toast.success('Role updated');
+      toast.success(t('toastUpdated'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -114,11 +132,11 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
         onClick={() => onOpenChange(false)}
         disabled={isPending}
       >
-        Cancel
+        {tCommon('cancel')}
       </Button>
       <Button type="submit" form={formId} disabled={isPending}>
         {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {isCreate ? 'Create' : 'Save'}
+        {isCreate ? tCommon('create') : tCommon('save')}
       </Button>
     </div>
   ) : null;
@@ -127,13 +145,16 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
     <AdminFormSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={isCreate ? 'Create role' : `Edit ${role?.name}`}
-      description={
+      title={
         isCreate
-          ? 'Define a role name and assign permissions.'
-          : 'Update description and permissions for this role.'
+          ? t('createTitle')
+          : t('editTitle', { name: role?.name ?? '' })
+      }
+      description={
+        isCreate ? t('createDescription') : t('editDescription')
       }
       size="lg"
+      showContentLocale={false}
       footer={footer}
     >
       {isCreate ? (
@@ -148,9 +169,9 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{tTable('name')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="MANAGER" {...field} />
+                    <Input placeholder={t('namePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -161,7 +182,7 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{tTable('description')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -173,10 +194,10 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
               name="permissionIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Permissions</FormLabel>
+                  <FormLabel>{tTable('permissions')}</FormLabel>
                   {isPermsError ? (
                     <p className="text-sm text-destructive">
-                      Could not load permissions. You need PERMISSION_READ access.
+                      {tErrors('permissionsLoadFailed')}
                     </p>
                   ) : (
                     <PermissionPicker
@@ -199,7 +220,7 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
             className="space-y-4"
           >
             <FormItem>
-              <FormLabel>Name</FormLabel>
+              <FormLabel>{tTable('name')}</FormLabel>
               <Input value={role?.name ?? ''} disabled readOnly />
             </FormItem>
             <FormField
@@ -207,7 +228,7 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{tTable('description')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -219,10 +240,10 @@ export function RoleManageSheet({ state, onOpenChange }: RoleManageSheetProps) {
               name="permissionIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Permissions</FormLabel>
+                  <FormLabel>{tTable('permissions')}</FormLabel>
                   {isPermsError ? (
                     <p className="text-sm text-destructive">
-                      Could not load permissions. You need PERMISSION_READ access.
+                      {tErrors('permissionsLoadFailed')}
                     </p>
                   ) : (
                     <PermissionPicker

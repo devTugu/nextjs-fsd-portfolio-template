@@ -1,1 +1,1 @@
-export { userColumns } from './user-columns';
+export { useUserColumns } from './user-columns';

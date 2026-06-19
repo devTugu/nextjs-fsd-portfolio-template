@@ -3,50 +3,26 @@ import type {
   AxiosInstance,
   InternalAxiosRequestConfig,
 } from 'axios';
-import { ROUTES } from '@/shared/config/routes';
-import { sessionHint } from '@/shared/lib/session-hint';
-import type { ApiEnvelope, ApiErrorEnvelope } from './types';
+import { refreshClientSession } from '@/shared/lib/bff-refresh';
+import { CSRF } from '@/shared/lib/csrf';
+import { getCsrfHeaderValue } from '@/shared/lib/csrf-client';
+import type { ApiErrorEnvelope } from './types';
 import { getErrorMessage } from './errorHandler';
-
-let refreshPromise: Promise<boolean> | null = null;
-
-const redirectToLogin = (): void => {
-  sessionHint.clear();
-  if (typeof window !== 'undefined') {
-    void fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-    const path = window.location.pathname;
-    if (!path.startsWith(ROUTES.LOGIN)) {
-      window.location.href = ROUTES.LOGIN;
-    }
-  }
-};
-
-const refreshSession = async (): Promise<boolean> => {
-  try {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      redirectToLogin();
-      return false;
-    }
-
-    const envelope = (await response.json()) as ApiEnvelope<{ expiresIn: number }>;
-    sessionHint.updateExpiresAt(envelope.data.expiresIn);
-    return true;
-  } catch {
-    redirectToLogin();
-    return false;
-  }
-};
 
 export const setupRequestInterceptor = (instance: AxiosInstance): void => {
   instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     if (config.headers && !config.headers['x-request-id']) {
       config.headers['x-request-id'] = crypto.randomUUID();
     }
+
+    const method = (config.method ?? 'get').toUpperCase();
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+      const csrf = getCsrfHeaderValue();
+      if (csrf && config.headers) {
+        config.headers[CSRF.HEADER] = csrf;
+      }
+    }
+
     return config;
   });
 };
@@ -81,18 +57,12 @@ export const setupResponseInterceptor = (instance: AxiosInstance): void => {
 
       originalRequest._retry = true;
 
-      if (!refreshPromise) {
-        refreshPromise = refreshSession().finally(() => {
-          refreshPromise = null;
-        });
-      }
-
-      const refreshed = await refreshPromise;
+      const refreshed = await refreshClientSession({ redirectOnFailure: true });
       if (!refreshed) {
         return Promise.reject(error);
       }
 
       return instance(originalRequest);
-    }
+    },
   );
 };

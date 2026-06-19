@@ -1,12 +1,15 @@
 export type {
   SiteSettingsOutput,
   UpdateSiteSettingsInput,
-  NavLink,
   SocialLink,
   SiteSettingsHero,
   SiteSettingsHeader,
   SiteSettingsFooter,
   SiteSettingsSeo,
   SiteSettingsContactInfo,
+  SiteSettingsTheme,
+  SiteSettingsAbout,
+  SiteSettingsAboutValue,
+  SiteSettingsAboutStat,
 } from './types/site-settings';
 export * from './api';

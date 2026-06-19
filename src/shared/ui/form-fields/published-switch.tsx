@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import {
   FormControl,
@@ -20,9 +21,12 @@ interface PublishedSwitchProps<T extends FieldValues> {
 export function PublishedSwitch<T extends FieldValues>({
   control,
   name,
-  label = 'Published',
+  label,
   disabled,
 }: PublishedSwitchProps<T>) {
+  const tStatus = useTranslations('status');
+  const resolvedLabel = label ?? tStatus('published');
+
   return (
     <FormField
       control={control}
@@ -30,9 +34,9 @@ export function PublishedSwitch<T extends FieldValues>({
       render={({ field }) => (
         <FormItem className="flex items-center justify-between rounded-lg border p-3">
           <div className="space-y-0.5">
-            <FormLabel>{label}</FormLabel>
+            <FormLabel>{resolvedLabel}</FormLabel>
             <p className="text-xs text-muted-foreground">
-              Visible on the public portfolio site
+              {tStatus('publishedHint')}
             </p>
           </div>
           <FormControl>

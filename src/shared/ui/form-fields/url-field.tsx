@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import {
   FormControl,
@@ -22,9 +23,12 @@ export function UrlField<T extends FieldValues>({
   control,
   name,
   label,
-  placeholder = 'https://...',
+  placeholder,
   disabled,
 }: UrlFieldProps<T>) {
+  const t = useTranslations('formFields');
+  const resolvedPlaceholder = placeholder ?? t('urlPlaceholder');
+
   return (
     <FormField
       control={control}
@@ -35,7 +39,7 @@ export function UrlField<T extends FieldValues>({
           <FormControl>
             <Input
               type="url"
-              placeholder={placeholder}
+              placeholder={resolvedPlaceholder}
               disabled={disabled}
               {...field}
               value={field.value ?? ''}

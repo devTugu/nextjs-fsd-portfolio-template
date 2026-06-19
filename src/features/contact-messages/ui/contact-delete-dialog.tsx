@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   type ContactMessageOutput,
@@ -29,13 +30,15 @@ export function ContactDeleteDialog({
   open,
   onOpenChange,
 }: ContactDeleteDialogProps) {
+  const t = useTranslations('entities.contactMessages');
+  const tCommon = useTranslations('common');
   const deleteMessage = useDeleteContactMessage();
 
   const handleDelete = async () => {
     if (!message) return;
     try {
       await deleteMessage.mutateAsync(message.id);
-      toast.success('Message deleted');
+      toast.success(t('toastDeleted'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -46,14 +49,14 @@ export function ContactDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete message?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Remove message from {message?.name}. This cannot be undone.
+            {t('deleteDescription', { name: message?.name ?? '' })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleteMessage.isPending}>
-            Cancel
+            {tCommon('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
@@ -63,7 +66,7 @@ export function ContactDeleteDialog({
             {deleteMessage.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            Delete
+            {tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

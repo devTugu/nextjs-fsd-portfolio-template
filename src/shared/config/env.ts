@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_NAME: z.string().min(1).default('Admin Console'),
+  NEXT_PUBLIC_BRAND_NAME: z.string().min(1).default('Your Site'),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).optional(),
 });
 
@@ -23,6 +25,8 @@ function failEnv(message: string, details: unknown): never {
 
 const parsedClient = clientEnvSchema.safeParse({
   NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME ?? 'Admin Console',
+  NEXT_PUBLIC_BRAND_NAME: process.env.NEXT_PUBLIC_BRAND_NAME ?? 'Your Site',
+  NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
   NODE_ENV: process.env.NODE_ENV,
 });
 
@@ -38,6 +42,12 @@ export const env = {
   APP_NAME: parsedClient.success
     ? parsedClient.data.NEXT_PUBLIC_APP_NAME
     : 'Admin Console',
+  BRAND_NAME: parsedClient.success
+    ? parsedClient.data.NEXT_PUBLIC_BRAND_NAME
+    : 'Your Site',
+  SITE_URL: parsedClient.success
+    ? parsedClient.data.NEXT_PUBLIC_SITE_URL
+    : undefined,
   APP_ENV: process.env.NODE_ENV ?? 'development',
 } as const;
 

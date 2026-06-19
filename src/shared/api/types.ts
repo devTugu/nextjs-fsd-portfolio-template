@@ -31,6 +31,29 @@ export interface TokenPair {
   expiresIn: number;
 }
 
+export type LoginResult =
+  | TokenPair
+  | { requiresMfa: true; mfaToken: string }
+  | { requiresMfaEnrollment: true; enrollmentToken: string };
+
+export interface MfaEnrollmentResponse {
+  otpauthUrl: string;
+}
+
+export interface LoginSuccessResponse {
+  expiresIn: number;
+}
+
+export interface MfaStepResponse {
+  requiresMfa: true;
+  mfaToken: string;
+}
+
+export interface MfaEnrollmentStepResponse {
+  requiresMfaEnrollment: true;
+  enrollmentToken: string;
+}
+
 export interface ApiError {
   message: string;
   statusCode: number;

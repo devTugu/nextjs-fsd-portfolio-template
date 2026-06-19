@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   type ContactMessageOutput,
@@ -51,6 +52,9 @@ export function ContactDetailSheet({
   onOpenChange,
   onDelete,
 }: ContactDetailSheetProps) {
+  const t = useTranslations('entities.contactMessages');
+  const tTable = useTranslations('table');
+  const tStatus = useTranslations('status');
   const { can } = useAuthPermissions();
   const canUpdate = can(PERMISSION_CODES.CONTACT_UPDATE);
   const canDelete = can(PERMISSION_CODES.CONTACT_DELETE);
@@ -70,19 +74,25 @@ export function ContactDetailSheet({
     if (!detail) return;
     try {
       await updateMessage.mutateAsync({ id: detail.id, data: values });
-      toast.success('Status updated');
+      toast.success(t('toastStatusUpdated'));
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
   });
 
+  const receivedDate = detail
+    ? new Date(detail.createdAt).toLocaleString()
+    : '';
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle>{detail?.subject ?? 'Contact message'}</SheetTitle>
+          <SheetTitle>{detail?.subject ?? t('defaultTitle')}</SheetTitle>
           <SheetDescription>
-            From {detail?.name} ({detail?.email})
+            {detail
+              ? t('fromLine', { name: detail.name, email: detail.email })
+              : null}
           </SheetDescription>
         </SheetHeader>
         {detail ? (
@@ -91,8 +101,12 @@ export function ContactDetailSheet({
               {detail.message}
             </div>
             <p className="text-xs text-muted-foreground">
-              Received {new Date(detail.createdAt).toLocaleString()}
-              {detail.ipAddress ? ` · IP ${detail.ipAddress}` : ''}
+              {detail.ipAddress
+                ? t('receivedWithIp', {
+                    date: receivedDate,
+                    ip: detail.ipAddress,
+                  })
+                : t('receivedLine', { date: receivedDate })}
             </p>
             <Separator />
             <Form {...form}>
@@ -102,7 +116,7 @@ export function ContactDetailSheet({
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>{tTable('status')}</FormLabel>
                       <Select
                         value={field.value ?? 'NEW'}
                         onValueChange={field.onChange}
@@ -114,9 +128,11 @@ export function ContactDetailSheet({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="NEW">NEW</SelectItem>
-                          <SelectItem value="READ">READ</SelectItem>
-                          <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+                          <SelectItem value="NEW">{tStatus('new')}</SelectItem>
+                          <SelectItem value="READ">{tStatus('read')}</SelectItem>
+                          <SelectItem value="ARCHIVED">
+                            {tStatus('archived')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -127,7 +143,7 @@ export function ContactDetailSheet({
                     {updateMessage.isPending ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : null}
-                    Update status
+                    {t('updateStatus')}
                   </Button>
                 ) : null}
               </form>
@@ -138,7 +154,7 @@ export function ContactDetailSheet({
           {canDelete ? (
             <Button variant="destructive" onClick={onDelete}>
               <Trash2 className="mr-2 size-4" />
-              Delete message
+              {t('deleteMessage')}
             </Button>
           ) : null}
         </SheetFooter>

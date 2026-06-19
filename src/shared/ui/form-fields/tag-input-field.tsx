@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { KeyboardEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { X } from 'lucide-react';
 import {
@@ -27,10 +28,13 @@ export function TagInputField<T extends FieldValues>({
   control,
   name,
   label,
-  placeholder = 'Type and press Enter',
+  placeholder,
   disabled,
 }: TagInputFieldProps<T>) {
+  const t = useTranslations('formFields');
+  const tCommon = useTranslations('common');
   const [input, setInput] = useState('');
+  const resolvedPlaceholder = placeholder ?? t('tagInputPlaceholder');
 
   return (
     <FormField
@@ -66,7 +70,7 @@ export function TagInputField<T extends FieldValues>({
                   value={input}
                   onChange={(event) => setInput(event.target.value)}
                   onKeyDown={onKeyDown}
-                  placeholder={placeholder}
+                  placeholder={resolvedPlaceholder}
                   disabled={disabled}
                 />
                 {tags.length > 0 ? (
@@ -81,7 +85,7 @@ export function TagInputField<T extends FieldValues>({
                           className="size-4 hover:bg-transparent"
                           onClick={() => removeTag(tag)}
                           disabled={disabled}
-                          aria-label={`Remove ${tag}`}
+                          aria-label={tCommon('removeAriaLabel', { name: tag })}
                         >
                           <X className="size-3" />
                         </Button>

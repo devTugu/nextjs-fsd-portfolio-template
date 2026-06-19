@@ -12,10 +12,15 @@ export function validateCsrfToken(
   headerToken: string | null
 ): boolean {
   if (!cookieToken || !headerToken) return false;
-  return crypto.timingSafeEqual(
-    Buffer.from(cookieToken),
-    Buffer.from(headerToken)
-  );
+  if (cookieToken.length !== headerToken.length) return false;
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(cookieToken),
+      Buffer.from(headerToken)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export const CSRF = {

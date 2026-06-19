@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AUTH_COOKIE_NAMES } from '@/shared/lib/auth-cookies';
 import { fetchInternal } from '@/shared/lib/internal-api';
+import { assertCsrf } from '@/shared/lib/bff-csrf';
 import {
   BffPathError,
   isBffPathAllowed,
@@ -28,6 +29,11 @@ export async function proxyToBackend(
   request: NextRequest,
   pathSegments: string[]
 ): Promise<NextResponse> {
+  if (MUTATING_METHODS.has(request.method)) {
+    const csrfError = assertCsrf(request);
+    if (csrfError) return csrfError;
+  }
+
   let upstreamPath: string;
 
   try {
@@ -70,8 +76,9 @@ export async function proxyToBackend(
   }
 
   const body = await readRequestBody(request);
+  const upstreamUrl = `${upstreamPath}${request.nextUrl.search}`;
 
-  const upstream = await fetchInternal(upstreamPath, {
+  const upstream = await fetchInternal(upstreamUrl, {
     method: request.method,
     headers,
     body,

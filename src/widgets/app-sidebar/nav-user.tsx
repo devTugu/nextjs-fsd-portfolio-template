@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ChevronsUpDown, LogOut } from 'lucide-react';
 import { useAuthStore, useLogout } from '@/features/auth';
 import { ROUTES } from '@/shared/config/routes';
+import { useTranslations } from 'next-intl';
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar';
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ export function NavUser() {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const router = useRouter();
+  const t = useTranslations('auth');
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? 'AD';
 
@@ -34,7 +36,7 @@ export function NavUser() {
     try {
       await logout.mutateAsync();
       router.push(ROUTES.LOGIN);
-      toast.success('Signed out');
+      toast.success(t('signedOut'));
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -56,10 +58,10 @@ export function NavUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {user?.email ?? 'Admin'}
+                  {user?.email ?? t('fallbackEmail')}
                 </span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user?.roles?.join(', ') ?? '—'}
+                  {user?.roles?.join(', ') ?? t('fallbackRoles')}
                 </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
@@ -86,7 +88,7 @@ export function NavUser() {
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} disabled={logout.isPending}>
               <LogOut />
-              Log out
+              {t('signOut')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

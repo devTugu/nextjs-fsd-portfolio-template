@@ -1,6 +1,7 @@
 'use client';
 
 import { Pencil, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { PermissionCode } from '@/shared/config/permissions';
 import { useAuthPermissions } from '@/features/auth';
 import { Button } from '@/shared/ui/button';
@@ -20,6 +21,7 @@ export function AdminTableActions({
   onEdit,
   onDelete,
 }: AdminTableActionsProps) {
+  const t = useTranslations('common');
   const { can } = useAuthPermissions();
   const canEdit = updatePermission ? can(updatePermission) : Boolean(onEdit);
   const canDelete = deletePermission ? can(deletePermission) : Boolean(onDelete);
@@ -34,7 +36,7 @@ export function AdminTableActions({
           size="icon"
           className="size-8"
           onClick={onEdit}
-          aria-label={`Edit ${name}`}
+          aria-label={t('editAriaLabel', { name })}
         >
           <Pencil className="size-4" />
         </Button>
@@ -45,7 +47,7 @@ export function AdminTableActions({
           size="icon"
           className="size-8 text-destructive hover:text-destructive"
           onClick={onDelete}
-          aria-label={`Delete ${name}`}
+          aria-label={t('deleteAriaLabel', { name })}
         >
           <Trash2 className="size-4" />
         </Button>

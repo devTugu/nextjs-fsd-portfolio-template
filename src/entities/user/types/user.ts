@@ -2,6 +2,7 @@ export interface UserOutput {
   id: number;
   email: string;
   isActive: boolean;
+  mfaEnabled: boolean;
   createdAt: string;
   updatedAt: string;
   roles: string[];

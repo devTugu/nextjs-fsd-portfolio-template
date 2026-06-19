@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { Badge } from '@/shared/ui/badge';
 import { cn } from '@/shared/lib/utils';
 
@@ -10,12 +13,14 @@ export function PublishedStatusBadge({
   isPublished,
   className,
 }: PublishedStatusBadgeProps) {
+  const t = useTranslations('status');
+
   return (
     <Badge
       variant={isPublished ? 'default' : 'secondary'}
       className={cn(className)}
     >
-      {isPublished ? 'Published' : 'Draft'}
+      {isPublished ? t('published') : t('draft')}
     </Badge>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import {
   createPermissionSchema,
@@ -42,6 +43,9 @@ export function PermissionManageSheet({
   state,
   onOpenChange,
 }: PermissionManageSheetProps) {
+  const t = useTranslations('entities.permissions');
+  const tCommon = useTranslations('common');
+  const tTable = useTranslations('table');
   const { can } = useAuthPermissions();
   const createPermission = useCreatePermission();
   const updatePermission = useUpdatePermission();
@@ -81,7 +85,7 @@ export function PermissionManageSheet({
   const onCreateSubmit = async (values: CreatePermissionFormValues) => {
     try {
       await createPermission.mutateAsync(values);
-      toast.success('Permission created');
+      toast.success(t('toastCreated'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -92,7 +96,7 @@ export function PermissionManageSheet({
     if (!permission) return;
     try {
       await updatePermission.mutateAsync({ id: permission.id, data: values });
-      toast.success('Permission updated');
+      toast.success(t('toastUpdated'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -110,11 +114,11 @@ export function PermissionManageSheet({
         onClick={() => onOpenChange(false)}
         disabled={isPending}
       >
-        Cancel
+        {tCommon('cancel')}
       </Button>
       <Button type="submit" form={formId} disabled={isPending}>
         {isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {isCreate ? 'Create' : 'Save'}
+        {isCreate ? tCommon('create') : tCommon('save')}
       </Button>
     </div>
   ) : null;
@@ -124,14 +128,15 @@ export function PermissionManageSheet({
       open={open}
       onOpenChange={onOpenChange}
       title={
-        isCreate ? 'Create permission' : `Edit ${permission?.code}`
+        isCreate
+          ? t('createTitle')
+          : t('editTitle', { code: permission?.code ?? '' })
       }
       description={
-        isCreate
-          ? 'Add a new permission code for RBAC.'
-          : 'Update the permission description.'
+        isCreate ? t('createDescription') : t('editDescription')
       }
       size="md"
+      showContentLocale={false}
       footer={footer}
     >
       {isCreate ? (
@@ -146,9 +151,9 @@ export function PermissionManageSheet({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Code</FormLabel>
+                  <FormLabel>{tTable('code')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="USER_READ" {...field} />
+                    <Input placeholder={t('codePlaceholder')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -159,7 +164,7 @@ export function PermissionManageSheet({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{tTable('description')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>
@@ -176,7 +181,7 @@ export function PermissionManageSheet({
             className="space-y-4"
           >
             <FormItem>
-              <FormLabel>Code</FormLabel>
+              <FormLabel>{tTable('code')}</FormLabel>
               <Input value={permission?.code ?? ''} disabled readOnly />
             </FormItem>
             <FormField
@@ -184,7 +189,7 @@ export function PermissionManageSheet({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{tTable('description')}</FormLabel>
                   <FormControl>
                     <Input {...field} />
                   </FormControl>

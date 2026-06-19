@@ -1,3 +1,4 @@
+import type { useTranslations } from 'next-intl';
 import type { Permission } from '@/entities/permission';
 
 export interface PermissionGroup {
@@ -6,25 +7,35 @@ export interface PermissionGroup {
   items: Permission[];
 }
 
+type PermissionGroupsTranslator = ReturnType<
+  typeof useTranslations<'permissionGroups'>
+>;
+
 const GROUP_DEFINITIONS = [
-  { key: 'users', title: 'Users', prefix: 'USER_' },
-  { key: 'roles', title: 'Roles', prefix: 'ROLE_' },
-  { key: 'permissions', title: 'Permissions', prefix: 'PERMISSION_' },
-  { key: 'projects', title: 'Projects', prefix: 'PROJECT_' },
-  { key: 'skills', title: 'Skills', prefix: 'SKILL_' },
-  { key: 'experiences', title: 'Experiences', prefix: 'EXPERIENCE_' },
-  { key: 'siteSettings', title: 'Site Settings', prefix: 'SITE_SETTING_' },
-  { key: 'contact', title: 'Contact', prefix: 'CONTACT_' },
+  { key: 'users', prefix: 'USER_' },
+  { key: 'roles', prefix: 'ROLE_' },
+  { key: 'permissions', prefix: 'PERMISSION_' },
+  { key: 'brands', prefix: 'BRAND_' },
+  { key: 'history', prefix: 'HISTORY_' },
+  { key: 'leadership', prefix: 'LEADERSHIP_' },
+  { key: 'team', prefix: 'TEAM_' },
+  { key: 'siteSettings', prefix: 'SITE_SETTING_' },
+  { key: 'contact', prefix: 'CONTACT_' },
+  { key: 'news', prefix: 'BLOG_' },
+  { key: 'navigation', prefix: 'NAV_' },
 ] as const;
 
-export function groupPermissions(items: Permission[]): PermissionGroup[] {
+export function groupPermissions(
+  items: Permission[],
+  t: PermissionGroupsTranslator,
+): PermissionGroup[] {
   const buckets = new Map<string, Permission[]>(
-    GROUP_DEFINITIONS.map((group) => [group.key, []])
+    GROUP_DEFINITIONS.map((group) => [group.key, []]),
   );
 
   for (const item of items) {
     const group = GROUP_DEFINITIONS.find((definition) =>
-      item.code.startsWith(definition.prefix)
+      item.code.startsWith(definition.prefix),
     );
     if (!group) continue;
     buckets.get(group.key)?.push(item);
@@ -32,14 +43,14 @@ export function groupPermissions(items: Permission[]): PermissionGroup[] {
 
   return GROUP_DEFINITIONS.map((group) => ({
     key: group.key,
-    title: group.title,
+    title: t(group.key),
     items: buckets.get(group.key) ?? [],
   })).filter((group) => group.items.length > 0);
 }
 
 export function filterPermissions(
   items: Permission[],
-  query: string
+  query: string,
 ): Permission[] {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return items;
@@ -47,6 +58,6 @@ export function filterPermissions(
   return items.filter(
     (item) =>
       item.code.toLowerCase().includes(normalized) ||
-      (item.description?.toLowerCase().includes(normalized) ?? false)
+      (item.description?.toLowerCase().includes(normalized) ?? false),
   );
 }

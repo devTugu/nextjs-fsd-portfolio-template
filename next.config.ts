@@ -1,4 +1,7 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/shared/i18n/request.ts');
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -38,6 +41,33 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
+  },
+  // Native CSS parser — must stay external (Turbopack cannot bundle .node binaries).
+  serverExternalPackages: [
+    'lightningcss',
+    'lightningcss-darwin-arm64',
+    'lightningcss-darwin-x64',
+    'lightningcss-linux-arm64-gnu',
+    'lightningcss-linux-arm64-musl',
+    'lightningcss-linux-x64-gnu',
+    'lightningcss-linux-x64-musl',
+    'lightningcss-win32-x64-msvc',
+    'lightningcss-win32-arm64-msvc',
+    '@tailwindcss/node',
+    '@tailwindcss/postcss',
+  ],
   async headers() {
     return [
       {
@@ -48,4 +78,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

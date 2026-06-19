@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { setAuthCookies } from '@/shared/lib/auth-cookies';
 import { fetchInternal, parseInternalJson } from '@/shared/lib/internal-api';
-import type { TokenPair } from '@/shared/api/types';
+import { buildAuthSuccessResponse } from '@/shared/lib/bff-auth-response';
+import { assertCsrf } from '@/shared/lib/bff-csrf';
+import type { LoginResult } from '@/shared/api/types';
 
 export async function POST(request: NextRequest) {
+  const csrfError = assertCsrf(request);
+  if (csrfError) return csrfError;
+
   const body = await request.text();
 
   const upstream = await fetchInternal('/auth/login', {
@@ -12,16 +16,11 @@ export async function POST(request: NextRequest) {
     body,
   });
 
-  const envelope = await parseInternalJson<TokenPair>(upstream);
+  const envelope = await parseInternalJson<LoginResult>(upstream);
 
   if (!upstream.ok) {
     return NextResponse.json(envelope, { status: upstream.status });
   }
 
-  const response = NextResponse.json({
-    success: true,
-    data: { expiresIn: envelope.data.expiresIn },
-  });
-
-  return setAuthCookies(response, envelope.data);
+  return buildAuthSuccessResponse(envelope);
 }

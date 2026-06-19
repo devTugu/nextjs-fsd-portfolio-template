@@ -1,6 +1,7 @@
 'use client';
 
 import { RefreshCw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getErrorMessage } from '@/shared/api';
 import { Button } from '@/shared/ui/button';
 
@@ -17,6 +18,8 @@ export function DataTableQueryState({
   refetch,
   children,
 }: DataTableQueryStateProps) {
+  const t = useTranslations('common');
+
   if (isError) {
     return (
       <div
@@ -32,7 +35,7 @@ export function DataTableQueryState({
           onClick={() => refetch()}
         >
           <RefreshCw className="mr-2 size-4" />
-          Retry
+          {t('retry')}
         </Button>
       </div>
     );

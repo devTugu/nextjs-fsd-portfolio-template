@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { type Permission, useDeletePermission } from '@/entities/permission';
 import { getErrorMessage } from '@/shared/api';
@@ -26,13 +27,15 @@ export function PermissionDeleteDialog({
   open,
   onOpenChange,
 }: PermissionDeleteDialogProps) {
+  const t = useTranslations('entities.permissions');
+  const tCommon = useTranslations('common');
   const deletePermission = useDeletePermission();
 
   const handleDelete = async () => {
     if (!permission) return;
     try {
       await deletePermission.mutateAsync(permission.id);
-      toast.success('Permission deleted');
+      toast.success(t('toastDeleted'));
       onOpenChange(false);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -43,14 +46,14 @@ export function PermissionDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete permission?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Remove {permission?.code} from the system.
+            {t('deleteDescription', { code: permission?.code ?? '' })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deletePermission.isPending}>
-            Cancel
+            {tCommon('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
@@ -60,7 +63,7 @@ export function PermissionDeleteDialog({
             {deletePermission.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            Delete
+            {tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

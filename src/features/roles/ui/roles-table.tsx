@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { useRoles, type Role } from '@/entities/role';
-import { roleColumns } from '@/entities/role/ui/role-columns';
+import { useRoleColumns } from '@/entities/role/ui/role-columns';
 import { useAuthPermissions } from '@/features/auth';
 import { PERMISSION_CODES } from '@/shared/config/permissions';
 import { useTableSearchParams } from '@/shared/hooks/use-table-search-params';
@@ -19,7 +20,10 @@ import { RoleManageSheet, type RoleSheetState } from './role-manage-sheet';
 import { RoleDeleteDialog } from './role-delete-dialog';
 
 export function RolesTable() {
+  const t = useTranslations('entities.roles');
+  const tCommon = useTranslations('common');
   const { can } = useAuthPermissions();
+  const roleColumns = useRoleColumns();
   const { pagination, setPagination, onSearchChange, queryParams, search } =
     useTableSearchParams();
   const { data, isLoading, isError, error, refetch } = useRoles(queryParams);
@@ -31,7 +35,7 @@ export function RolesTable() {
       ...roleColumns,
       {
         id: 'actions',
-        header: () => <span className="sr-only">Actions</span>,
+        header: () => <span className="sr-only">{tCommon('actions')}</span>,
         cell: ({ row }) => (
           <AdminTableActions
             name={row.original.name}
@@ -45,7 +49,7 @@ export function RolesTable() {
         ),
       },
     ],
-    []
+    [roleColumns, tCommon],
   );
 
   const canCreate = can(PERMISSION_CODES.ROLE_CREATE);
@@ -56,11 +60,11 @@ export function RolesTable() {
         <DataTableToolbar
           initialSearch={search}
           onSearchChange={onSearchChange}
-          placeholder="Search roles..."
+          placeholder={t('searchPlaceholder')}
         >
           {canCreate ? (
             <Button size="sm" onClick={() => setSheetState({ mode: 'create' })}>
-              Add role
+              {t('addRole')}
             </Button>
           ) : null}
         </DataTableToolbar>
@@ -73,14 +77,14 @@ export function RolesTable() {
           isLoading={isLoading}
           emptyContent={
             <DataTableEmpty
-              title="No roles found"
+              title={t('emptyTitle')}
               action={
                 canCreate ? (
                   <Button
                     size="sm"
                     onClick={() => setSheetState({ mode: 'create' })}
                   >
-                    Add role
+                    {t('addRole')}
                   </Button>
                 ) : undefined
               }

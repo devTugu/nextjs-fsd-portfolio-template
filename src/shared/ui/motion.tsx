@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion';
+import { useIsMounted } from '@/shared/hooks/use-is-mounted';
 
 const fadeInVariants = {
   hidden: { opacity: 0, y: 8 },
@@ -19,14 +20,9 @@ export const FadeIn = ({
   className,
   ...props
 }: FadeInProps) => {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsMounted();
   const prefersReducedMotion = useReducedMotion();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Stable markup for SSR + hydration (avoids reduced-motion server/client branch).
   if (!mounted || prefersReducedMotion) {
     return <div className={className}>{children}</div>;
   }

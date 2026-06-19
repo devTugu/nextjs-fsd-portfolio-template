@@ -1,4 +1,9 @@
 export async function register() {
+  const { initSentryIfConfigured } = await import(
+    '@/shared/observability/sentry'
+  );
+  await initSentryIfConfigured();
+
   if (process.env.OTEL_ENABLED !== 'true') {
     return;
   }

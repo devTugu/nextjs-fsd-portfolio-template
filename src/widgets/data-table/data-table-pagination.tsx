@@ -1,6 +1,7 @@
 'use client';
 
 import type { Table } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/shared/ui/button';
 import {
   Select,
@@ -17,11 +18,16 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const t = useTranslations('common');
+  const pageCount = table.getPageCount() || 1;
+
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        Page {table.getState().pagination.pageIndex + 1} of{' '}
-        {table.getPageCount() || 1}
+        {t('pageOf', {
+          page: table.getState().pagination.pageIndex + 1,
+          total: pageCount,
+        })}
       </p>
       <div className="flex items-center gap-2">
         <Select
@@ -34,7 +40,7 @@ export function DataTablePagination<TData>({
           <SelectContent>
             {[10, 20, 50].map((size) => (
               <SelectItem key={size} value={String(size)}>
-                {size} rows
+                {t('rows', { count: size })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -45,7 +51,7 @@ export function DataTablePagination<TData>({
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          Previous
+          {t('previous')}
         </Button>
         <Button
           variant="outline"
@@ -53,7 +59,7 @@ export function DataTablePagination<TData>({
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          Next
+          {t('next')}
         </Button>
       </div>
     </div>

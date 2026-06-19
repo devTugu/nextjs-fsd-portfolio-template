@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import {
   FormControl,
@@ -20,16 +21,19 @@ interface SortOrderFieldProps<T extends FieldValues> {
 export function SortOrderField<T extends FieldValues>({
   control,
   name,
-  label = 'Sort order',
+  label,
   disabled,
 }: SortOrderFieldProps<T>) {
+  const t = useTranslations('formFields');
+  const resolvedLabel = label ?? t('sortOrder');
+
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          <FormLabel>{resolvedLabel}</FormLabel>
           <FormControl>
             <Input
               type="number"

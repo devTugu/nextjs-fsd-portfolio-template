@@ -5,4 +5,4 @@ export type {
   ListContactMessagesParams,
 } from './types/contact-message';
 export * from './api';
-export { contactMessageColumns } from './ui/contact-message-columns';
+export { useContactMessageColumns } from './ui/contact-message-columns';

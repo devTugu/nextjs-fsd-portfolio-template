@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Permission } from '@/entities/permission';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
@@ -22,6 +23,7 @@ interface PermissionGroupProps {
   value: number[];
   onChange: (ids: number[]) => void;
   disabled?: boolean;
+  selectAllLabel: string;
 }
 
 function PermissionGroup({
@@ -30,6 +32,7 @@ function PermissionGroup({
   value,
   onChange,
   disabled,
+  selectAllLabel,
 }: PermissionGroupProps) {
   if (items.length === 0) return null;
 
@@ -63,7 +66,7 @@ function PermissionGroup({
             onCheckedChange={(checked) => toggleAll(checked === true)}
             disabled={disabled}
           />
-          Select all
+          {selectAllLabel}
         </label>
       </div>
       <div className="space-y-2">
@@ -101,21 +104,27 @@ export function PermissionPicker({
   onChange,
   disabled,
 }: PermissionPickerProps) {
+  const t = useTranslations('entities.permissions');
+  const tCommon = useTranslations('common');
+  const tGroups = useTranslations('permissionGroups');
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(
     () => filterPermissions(permissions, search),
-    [permissions, search]
+    [permissions, search],
   );
-  const groups = useMemo(() => groupPermissions(filtered), [filtered]);
+  const groups = useMemo(
+    () => groupPermissions(filtered, tGroups),
+    [filtered, tGroups],
+  );
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="permission-search">Search permissions</Label>
+        <Label htmlFor="permission-search">{t('searchLabel')}</Label>
         <Input
           id="permission-search"
-          placeholder="Filter by code or description"
+          placeholder={t('filterPlaceholder')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           disabled={disabled}
@@ -132,16 +141,17 @@ export function PermissionPicker({
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
+                selectAllLabel={tCommon('selectAll')}
               />
             </div>
           ))}
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No permissions found.</p>
+            <p className="text-sm text-muted-foreground">{t('pickerEmpty')}</p>
           ) : null}
         </div>
       </ScrollArea>
       <p className="text-xs text-muted-foreground">
-        {value.length} of {permissions.length} selected
+        {t('selectedCount', { selected: value.length, total: permissions.length })}
       </p>
     </div>
   );

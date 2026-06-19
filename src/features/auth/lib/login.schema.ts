@@ -1,8 +1,16 @@
 import { z } from 'zod';
+import type { ValidationMessages } from '@/shared/i18n/validation-messages';
 
-export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-});
+type LoginValidationMessages = Pick<
+  ValidationMessages,
+  'invalidEmailAddress' | 'passwordMinLength'
+>;
 
-export type LoginFormValues = z.infer<typeof loginSchema>;
+export function createLoginSchema(v: LoginValidationMessages) {
+  return z.object({
+    email: z.string().email(v.invalidEmailAddress),
+    password: z.string().min(8, v.passwordMinLength),
+  });
+}
+
+export type LoginFormValues = z.infer<ReturnType<typeof createLoginSchema>>;

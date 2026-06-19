@@ -1,6 +1,7 @@
 'use client';
 
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { type UserOutput, useDeleteUser } from '@/entities/user';
 import { getErrorMessage } from '@/shared/api';
@@ -28,13 +29,15 @@ export function UserDeleteDialog({
   onOpenChange,
   onDeleted,
 }: UserDeleteDialogProps) {
+  const t = useTranslations('entities.users');
+  const tCommon = useTranslations('common');
   const deleteUser = useDeleteUser();
 
   const handleDelete = async () => {
     if (!user) return;
     try {
       await deleteUser.mutateAsync(user.id);
-      toast.success('User deleted');
+      toast.success(t('toastDeleted'));
       onOpenChange(false);
       onDeleted?.();
     } catch (error) {
@@ -46,14 +49,14 @@ export function UserDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete user?</AlertDialogTitle>
+          <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will remove {user?.email}. This action cannot be undone.
+            {t('deleteDescription', { email: user?.email ?? '' })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={deleteUser.isPending}>
-            Cancel
+            {tCommon('cancel')}
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
@@ -63,7 +66,7 @@ export function UserDeleteDialog({
             {deleteUser.isPending ? (
               <Loader2 className="size-4 animate-spin" />
             ) : null}
-            Delete
+            {tCommon('delete')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

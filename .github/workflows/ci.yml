@@ -23,6 +23,8 @@ jobs:
 
       - run: npm ci
 
+      - run: node scripts/verify-lightningcss.js
+
       - run: npm run lint
 
       - run: npm run typecheck
@@ -70,6 +72,9 @@ jobs:
       API_INTERNAL_URL: http://localhost:3001/api/v1
       E2E_ADMIN_EMAIL: admin@example.com
       E2E_ADMIN_PASSWORD: Admin123!
+      E2E_VIEWER_EMAIL: viewer@example.com
+      E2E_VIEWER_PASSWORD: Viewer123!
+      MFA_REQUIRED_ROLES: ''
 
     steps:
       - uses: actions/checkout@v4
@@ -115,6 +120,10 @@ jobs:
           LOG_LEVEL=error
           SEED_ADMIN_EMAIL=admin@example.com
           SEED_ADMIN_PASSWORD=Admin123!
+          SEED_VIEWER_EMAIL=viewer@example.com
+          SEED_VIEWER_PASSWORD=Viewer123!
+          MFA_REQUIRED_ROLES=
+          MFA_ENCRYPTION_KEY=ci_mfa_encryption_key_minimum_32_chars
           EOF
 
       - name: Build API

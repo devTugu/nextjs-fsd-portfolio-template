@@ -2,7 +2,9 @@
 
 import { AuthGuard, SessionExpiryDialog, TokenRefreshScheduler } from '@/features/auth';
 import { AppSidebar, SiteHeader } from '@/widgets/app-sidebar';
+import { CsrfBootstrap } from '@/widgets/csrf-bootstrap/csrf-bootstrap';
 import { PageTransition } from '@/widgets/motion/page-transition';
+import { useTranslations } from 'next-intl';
 import { SidebarInset, SidebarProvider } from '@/shared/ui/sidebar';
 
 export default function DashboardLayout({
@@ -10,15 +12,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations('common');
+
   return (
     <AuthGuard>
+      <CsrfBootstrap />
       <TokenRefreshScheduler />
       <SessionExpiryDialog />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:shadow"
       >
-        Skip to main content
+        {t('skipToContent')}
       </a>
       <SidebarProvider
         style={

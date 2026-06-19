@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { usePermissionList, type Permission } from '@/entities/permission';
-import { permissionColumns } from '@/entities/permission/ui/permission-columns';
+import { usePermissionColumns } from '@/entities/permission/ui/permission-columns';
 import { useAuthPermissions } from '@/features/auth';
 import { PERMISSION_CODES } from '@/shared/config/permissions';
 import { useTableSearchParams } from '@/shared/hooks/use-table-search-params';
@@ -22,7 +23,10 @@ import {
 import { PermissionDeleteDialog } from './permission-delete-dialog';
 
 export function PermissionsTable() {
+  const t = useTranslations('entities.permissions');
+  const tCommon = useTranslations('common');
   const { can } = useAuthPermissions();
+  const permissionColumns = usePermissionColumns();
   const { pagination, setPagination, onSearchChange, queryParams, search } =
     useTableSearchParams();
   const { data, isLoading, isError, error, refetch } =
@@ -37,7 +41,7 @@ export function PermissionsTable() {
       ...permissionColumns,
       {
         id: 'actions',
-        header: () => <span className="sr-only">Actions</span>,
+        header: () => <span className="sr-only">{tCommon('actions')}</span>,
         cell: ({ row }) => (
           <AdminTableActions
             name={row.original.code}
@@ -51,7 +55,7 @@ export function PermissionsTable() {
         ),
       },
     ],
-    []
+    [permissionColumns, tCommon],
   );
 
   const canCreate = can(PERMISSION_CODES.PERMISSION_CREATE);
@@ -62,14 +66,14 @@ export function PermissionsTable() {
         <DataTableToolbar
           initialSearch={search}
           onSearchChange={onSearchChange}
-          placeholder="Search permissions..."
+          placeholder={t('searchPlaceholder')}
         >
           {canCreate ? (
             <Button
               size="sm"
               onClick={() => setSheetState({ mode: 'create' })}
             >
-              Add permission
+              {t('addPermission')}
             </Button>
           ) : null}
         </DataTableToolbar>
@@ -82,14 +86,14 @@ export function PermissionsTable() {
           isLoading={isLoading}
           emptyContent={
             <DataTableEmpty
-              title="No permissions found"
+              title={t('emptyTitle')}
               action={
                 canCreate ? (
                   <Button
                     size="sm"
                     onClick={() => setSheetState({ mode: 'create' })}
                   >
-                    Add permission
+                    {t('addPermission')}
                   </Button>
                 ) : undefined
               }

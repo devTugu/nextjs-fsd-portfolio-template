@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useTranslations } from 'next-intl';
 import { useAuditLogs, type AuditLogOutput } from '@/entities/audit-log';
 import { useTableSearchParams } from '@/shared/hooks/use-table-search-params';
 import {
@@ -12,6 +13,8 @@ import {
 } from '@/widgets/data-table';
 
 export function AuditLogsTable() {
+  const t = useTranslations('entities.auditLogs');
+  const tTable = useTranslations('table');
   const { pagination, setPagination, onSearchChange, queryParams, search } =
     useTableSearchParams();
 
@@ -21,16 +24,16 @@ export function AuditLogsTable() {
     () => [
       {
         accessorKey: 'createdAt',
-        header: 'Time',
+        header: tTable('time'),
         cell: ({ row }) => new Date(row.original.createdAt).toLocaleString(),
       },
-      { accessorKey: 'action', header: 'Action' },
-      { accessorKey: 'resource', header: 'Resource' },
-      { accessorKey: 'resourceId', header: 'Resource ID' },
-      { accessorKey: 'userId', header: 'User ID' },
-      { accessorKey: 'ipAddress', header: 'IP' },
+      { accessorKey: 'action', header: tTable('action') },
+      { accessorKey: 'resource', header: tTable('resource') },
+      { accessorKey: 'resourceId', header: tTable('resourceId') },
+      { accessorKey: 'userId', header: tTable('userId') },
+      { accessorKey: 'ipAddress', header: tTable('ip') },
     ],
-    []
+    [tTable],
   );
 
   return (
@@ -38,7 +41,7 @@ export function AuditLogsTable() {
       <DataTableToolbar
         initialSearch={search}
         onSearchChange={onSearchChange}
-        placeholder="Filter by action or resource..."
+        placeholder={t('searchPlaceholder')}
       />
       <DataTableQueryState isError={isError} error={error} refetch={refetch}>
         <DataTable
@@ -48,7 +51,7 @@ export function AuditLogsTable() {
           pagination={pagination}
           onPaginationChange={setPagination}
           isLoading={isLoading}
-          emptyContent={<DataTableEmpty title="No audit logs found." />}
+          emptyContent={<DataTableEmpty title={t('emptyTitle')} />}
         />
       </DataTableQueryState>
     </div>

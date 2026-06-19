@@ -1,17 +1,24 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useSiteSettings, useUpdateSiteSettings } from '@/entities/site-settings';
 import { useAuthPermissions } from '@/features/auth';
 import { PERMISSION_CODES } from '@/shared/config/permissions';
+import { ROUTES } from '@/shared/config/routes';
 import { getErrorMessage } from '@/shared/api';
 import { MediaUploadField } from '@/entities/media';
 import {
-  TagInputField,
+  LocalizedTagInputField,
+  LocalizedTextField,
+  LocalizedTextareaField,
+  ColorPickerField,
 } from '@/shared/ui/form-fields';
+import { normalizeHexColor } from '@/shared/lib/normalize-hex-color';
 import { Button } from '@/shared/ui/button';
 import {
   Card,
@@ -29,7 +36,6 @@ import {
 } from '@/shared/ui/form';
 import { Input } from '@/shared/ui/input';
 import { Switch } from '@/shared/ui/switch';
-import { Textarea } from '@/shared/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Skeleton } from '@/shared/ui/skeleton';
 import {
@@ -37,8 +43,15 @@ import {
   toSiteSettingsFormValues,
   type SiteSettingsFormValues,
 } from './site-settings-form.utils';
+import { emptyLocalizedText } from '@/shared/i18n/localized-content';
+import { AdminContentLocaleProvider } from '@/shared/i18n/admin-content-locale-context';
+import { AdminContentLocaleTabs } from '@/widgets/admin-content-locale-tabs';
 
 export function SiteSettingsForm() {
+  const t = useTranslations('entities.siteSettings');
+  const tCommon = useTranslations('common');
+  const tAuth = useTranslations('auth');
+  const tTable = useTranslations('table');
   const { can } = useAuthPermissions();
   const canUpdate = can(PERMISSION_CODES.SITE_SETTING_UPDATE);
   const { data, isLoading } = useSiteSettings();
@@ -48,7 +61,6 @@ export function SiteSettingsForm() {
     defaultValues: emptySiteSettingsFormValues,
   });
 
-  const navLinks = useFieldArray({ control: form.control, name: 'header.navLinks' });
   const socialLinks = useFieldArray({
     control: form.control,
     name: 'footer.socialLinks',
@@ -60,9 +72,47 @@ export function SiteSettingsForm() {
   }, [data, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
+    const location = values.contactInfo.location ?? emptyLocalizedText();
+    const address = values.contactInfo.address ?? emptyLocalizedText();
+    const workHours = values.contactInfo.workHours ?? emptyLocalizedText();
+    const hasText = (value: string | null | undefined) =>
+      Boolean(value?.trim());
+    const normalizedLocation =
+      hasText(location.en) || hasText(location.mn) ? location : null;
+    const normalizedAddress =
+      hasText(address.en) || hasText(address.mn) ? address : null;
+    const normalizedWorkHours =
+      hasText(workHours.en) || hasText(workHours.mn) ? workHours : null;
+    const normalizeUrl = (value: string | null | undefined) =>
+      hasText(value) ? value!.trim() : null;
+
     try {
-      await updateSettings.mutateAsync(values);
-      toast.success('Site settings saved');
+      await updateSettings.mutateAsync({
+        ...values,
+        header: {
+          ...values.header,
+          logoUrl: normalizeUrl(values.header.logoUrl),
+          logoDarkUrl: normalizeUrl(values.header.logoDarkUrl),
+          adminLogoUrl: normalizeUrl(values.header.adminLogoUrl),
+          faviconUrl: normalizeUrl(values.header.faviconUrl),
+        },
+        footer: {
+          ...values.footer,
+          socialLinks: values.footer.socialLinks.filter(
+            (link) => hasText(link.platform) && hasText(link.url),
+          ),
+        },
+        theme: {
+          brandColor: normalizeHexColor(values.theme.brandColor),
+        },
+        contactInfo: {
+          ...values.contactInfo,
+          location: normalizedLocation,
+          address: normalizedAddress,
+          workHours: normalizedWorkHours,
+        },
+      });
+      toast.success(t('toastSaved'));
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -78,96 +128,97 @@ export function SiteSettingsForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={onSubmit} className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Site settings</h2>
+    <AdminContentLocaleProvider resetKey={data.updatedAt}>
+      <Form {...form}>
+        <form onSubmit={onSubmit} className="space-y-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
-              Last updated {new Date(data.updatedAt).toLocaleString()}
+              {t('lastUpdated', {
+                date: new Date(data.updatedAt).toLocaleString(),
+              })}
             </p>
+            {canUpdate ? (
+              <Button type="submit" disabled={updateSettings.isPending}>
+                {updateSettings.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
+                {tCommon('saveChanges')}
+              </Button>
+            ) : null}
           </div>
-          {canUpdate ? (
-            <Button type="submit" disabled={updateSettings.isPending}>
-              {updateSettings.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : null}
-              Save changes
-            </Button>
-          ) : null}
-        </div>
 
-        <Tabs defaultValue="hero">
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5">
-            <TabsTrigger value="hero">Hero</TabsTrigger>
-            <TabsTrigger value="header">Header</TabsTrigger>
-            <TabsTrigger value="footer">Footer</TabsTrigger>
-            <TabsTrigger value="seo">SEO</TabsTrigger>
-            <TabsTrigger value="contact">Contact</TabsTrigger>
+          <AdminContentLocaleTabs className="rounded-lg border px-4" />
+
+          <Tabs defaultValue="hero">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+            <TabsTrigger value="hero">{t('tabHero')}</TabsTrigger>
+            <TabsTrigger value="about">{t('tabAbout')}</TabsTrigger>
+            <TabsTrigger value="theme">{t('tabTheme')}</TabsTrigger>
+            <TabsTrigger value="header">{t('tabHeader')}</TabsTrigger>
+            <TabsTrigger value="footer">{t('tabFooter')}</TabsTrigger>
+            <TabsTrigger value="seo">{t('tabSeo')}</TabsTrigger>
+            <TabsTrigger value="contact">{t('tabContact')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="hero" className="pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Hero section</CardTitle>
-                <CardDescription>Homepage hero content.</CardDescription>
+                <CardTitle>{t('heroSectionTitle')}</CardTitle>
+                <CardDescription>{t('heroSectionDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="hero.title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={tTable('title')}
+                  disabled={!canUpdate}
                 />
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="hero.subtitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Subtitle</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('subtitle')}
+                  disabled={!canUpdate}
                 />
-                <FormField
+                <LocalizedTextareaField
                   control={form.control}
                   name="hero.description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea rows={3} disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={tTable('description')}
+                  disabled={!canUpdate}
+                  rows={3}
                 />
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
+                  <LocalizedTextField
                     control={form.control}
                     name="hero.ctaLabel"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>CTA label</FormLabel>
-                        <FormControl>
-                          <Input disabled={!canUpdate} {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
+                    label={t('ctaLabel')}
+                    disabled={!canUpdate}
                   />
                   <FormField
                     control={form.control}
                     name="hero.ctaUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CTA URL</FormLabel>
+                        <FormLabel>{t('ctaUrl')}</FormLabel>
+                        <FormControl>
+                          <Input disabled={!canUpdate} {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <LocalizedTextField
+                    control={form.control}
+                    name="hero.secondaryCtaLabel"
+                    label={t('secondaryCtaLabel')}
+                    disabled={!canUpdate}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="hero.secondaryCtaUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('secondaryCtaUrl')}</FormLabel>
                         <FormControl>
                           <Input disabled={!canUpdate} {...field} />
                         </FormControl>
@@ -178,8 +229,58 @@ export function SiteSettingsForm() {
                 <MediaUploadField
                   control={form.control}
                   name="hero.imageUrl"
-                  label="Hero image URL"
+                  label={t('heroImageUrl')}
                   disabled={!canUpdate}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="about" className="pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('aboutSectionTitle')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <LocalizedTextareaField
+                  control={form.control}
+                  name="about.brief"
+                  label={t('aboutBrief')}
+                  disabled={!canUpdate}
+                  rows={3}
+                />
+                <LocalizedTextareaField
+                  control={form.control}
+                  name="about.mission"
+                  label={t('aboutMission')}
+                  disabled={!canUpdate}
+                  rows={3}
+                />
+                <LocalizedTextareaField
+                  control={form.control}
+                  name="about.vision"
+                  label={t('aboutVision')}
+                  disabled={!canUpdate}
+                  rows={3}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="theme" className="pt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('themeSectionTitle')}</CardTitle>
+                <CardDescription>{t('themeSectionDescription')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ColorPickerField
+                  control={form.control}
+                  name="theme.brandColor"
+                  label={t('brandColor')}
+                  description={t('brandColorDescription')}
+                  disabled={!canUpdate}
+                  placeholder="#635BFF"
                 />
               </CardContent>
             </Card>
@@ -188,81 +289,44 @@ export function SiteSettingsForm() {
           <TabsContent value="header" className="space-y-4 pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Header</CardTitle>
+                <CardTitle>{t('headerSectionTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <MediaUploadField
                   control={form.control}
                   name="header.logoUrl"
-                  label="Logo URL"
+                  label={t('logoUrl')}
                   disabled={!canUpdate}
                 />
-                <FormField
+                <MediaUploadField
+                  control={form.control}
+                  name="header.logoDarkUrl"
+                  label={t('logoDarkUrl')}
+                  disabled={!canUpdate}
+                />
+                <MediaUploadField
+                  control={form.control}
+                  name="header.adminLogoUrl"
+                  label={t('adminLogoUrl')}
+                  disabled={!canUpdate}
+                />
+                <MediaUploadField
+                  control={form.control}
+                  name="header.faviconUrl"
+                  label={t('faviconUrl')}
+                  disabled={!canUpdate}
+                />
+                <LocalizedTextField
                   control={form.control}
                   name="header.siteName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Site name</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('siteName')}
+                  disabled={!canUpdate}
                 />
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Navigation links</FormLabel>
-                    {canUpdate ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navLinks.append({ label: '', href: '' })}
-                      >
-                        <Plus className="mr-1 size-4" />
-                        Add link
-                      </Button>
-                    ) : null}
-                  </div>
-                  {navLinks.fields.map((field, index) => (
-                    <div key={field.id} className="flex gap-2 rounded-lg border p-3">
-                      <FormField
-                        control={form.control}
-                        name={`header.navLinks.${index}.label`}
-                        render={({ field: labelField }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Label</FormLabel>
-                            <FormControl>
-                              <Input disabled={!canUpdate} {...labelField} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`header.navLinks.${index}.href`}
-                        render={({ field: hrefField }) => (
-                          <FormItem className="flex-1">
-                            <FormLabel>Href</FormLabel>
-                            <FormControl>
-                              <Input disabled={!canUpdate} {...hrefField} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      {canUpdate ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="mt-8"
-                          onClick={() => navLinks.remove(index)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      ) : null}
-                    </div>
-                  ))}
+                <div className="rounded-lg border p-4">
+                  <p className="text-muted-foreground text-sm">{t('manageNavigation')}</p>
+                  <Button type="button" variant="link" className="mt-2 h-auto p-0" asChild>
+                    <Link href={ROUTES.NAVIGATION}>{t('manageNavigationLink')}</Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -271,36 +335,24 @@ export function SiteSettingsForm() {
           <TabsContent value="footer" className="space-y-4 pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Footer</CardTitle>
+                <CardTitle>{t('footerSectionTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="footer.copyright"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Copyright</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('copyright')}
+                  disabled={!canUpdate}
                 />
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="footer.tagline"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tagline</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('tagline')}
+                  disabled={!canUpdate}
                 />
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <FormLabel>Social links</FormLabel>
+                    <FormLabel>{t('socialLinks')}</FormLabel>
                     {canUpdate ? (
                       <Button
                         type="button"
@@ -311,7 +363,7 @@ export function SiteSettingsForm() {
                         }
                       >
                         <Plus className="mr-1 size-4" />
-                        Add social
+                        {t('addSocial')}
                       </Button>
                     ) : null}
                   </div>
@@ -322,7 +374,7 @@ export function SiteSettingsForm() {
                         name={`footer.socialLinks.${index}.platform`}
                         render={({ field: platformField }) => (
                           <FormItem className="flex-1">
-                            <FormLabel>Platform</FormLabel>
+                            <FormLabel>{t('platform')}</FormLabel>
                             <FormControl>
                               <Input disabled={!canUpdate} {...platformField} />
                             </FormControl>
@@ -334,7 +386,7 @@ export function SiteSettingsForm() {
                         name={`footer.socialLinks.${index}.url`}
                         render={({ field: urlField }) => (
                           <FormItem className="flex-1">
-                            <FormLabel>URL</FormLabel>
+                            <FormLabel>{t('href')}</FormLabel>
                             <FormControl>
                               <Input disabled={!canUpdate} {...urlField} />
                             </FormControl>
@@ -362,43 +414,32 @@ export function SiteSettingsForm() {
           <TabsContent value="seo" className="pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>SEO</CardTitle>
+                <CardTitle>{t('seoSectionTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="seo.title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Meta title</FormLabel>
-                      <FormControl>
-                        <Input disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('metaTitle')}
+                  disabled={!canUpdate}
                 />
-                <FormField
+                <LocalizedTextareaField
                   control={form.control}
                   name="seo.description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Meta description</FormLabel>
-                      <FormControl>
-                        <Textarea rows={3} disabled={!canUpdate} {...field} />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('metaDescription')}
+                  disabled={!canUpdate}
+                  rows={3}
                 />
                 <MediaUploadField
                   control={form.control}
                   name="seo.ogImageUrl"
-                  label="OG image URL"
+                  label={t('ogImageUrl')}
                   disabled={!canUpdate}
                 />
-                <TagInputField
+                <LocalizedTagInputField
                   control={form.control}
                   name="seo.keywords"
-                  label="Keywords"
+                  label={t('keywords')}
                   disabled={!canUpdate}
                 />
               </CardContent>
@@ -408,7 +449,7 @@ export function SiteSettingsForm() {
           <TabsContent value="contact" className="pt-4">
             <Card>
               <CardHeader>
-                <CardTitle>Contact info</CardTitle>
+                <CardTitle>{t('contactSectionTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -416,7 +457,7 @@ export function SiteSettingsForm() {
                   name="contactInfo.email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>{tAuth('email')}</FormLabel>
                       <FormControl>
                         <Input type="email" disabled={!canUpdate} {...field} />
                       </FormControl>
@@ -428,7 +469,7 @@ export function SiteSettingsForm() {
                   name="contactInfo.phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>{t('phone')}</FormLabel>
                       <FormControl>
                         <Input
                           disabled={!canUpdate}
@@ -439,28 +480,30 @@ export function SiteSettingsForm() {
                     </FormItem>
                   )}
                 />
-                <FormField
+                <LocalizedTextField
                   control={form.control}
                   name="contactInfo.location"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Location</FormLabel>
-                      <FormControl>
-                        <Input
-                          disabled={!canUpdate}
-                          {...field}
-                          value={field.value ?? ''}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label={t('location')}
+                  disabled={!canUpdate}
+                />
+                <LocalizedTextField
+                  control={form.control}
+                  name="contactInfo.address"
+                  label={t('address')}
+                  disabled={!canUpdate}
+                />
+                <LocalizedTextField
+                  control={form.control}
+                  name="contactInfo.workHours"
+                  label={t('workHours')}
+                  disabled={!canUpdate}
                 />
                 <FormField
                   control={form.control}
                   name="contactInfo.showForm"
                   render={({ field }) => (
                     <FormItem className="flex items-center justify-between rounded-lg border p-3">
-                      <FormLabel>Show contact form</FormLabel>
+                      <FormLabel>{t('showContactForm')}</FormLabel>
                       <FormControl>
                         <Switch
                           checked={field.value}
@@ -477,5 +520,6 @@ export function SiteSettingsForm() {
         </Tabs>
       </form>
     </Form>
+    </AdminContentLocaleProvider>
   );
 }

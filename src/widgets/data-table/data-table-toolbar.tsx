@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/shared/ui/input';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 
@@ -13,11 +14,12 @@ interface DataTableToolbarProps {
 }
 
 export function DataTableToolbar({
-  placeholder = 'Search...',
+  placeholder,
   initialSearch = '',
   onSearchChange,
   children,
 }: DataTableToolbarProps) {
+  const t = useTranslations('common');
   const [search, setSearch] = useState(initialSearch);
   const [prevInitialSearch, setPrevInitialSearch] = useState(initialSearch);
   const debounced = useDebounce(search, 400);
@@ -41,7 +43,7 @@ export function DataTableToolbar({
       <div className="relative w-full sm:max-w-sm">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder={placeholder}
+          placeholder={placeholder ?? t('search')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
