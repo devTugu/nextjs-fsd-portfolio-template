@@ -15,6 +15,7 @@ export default async function AboutUsPage() {
     brief: emptyLocalizedText(),
     mission: emptyLocalizedText(),
     vision: emptyLocalizedText(),
+    imageUrl: null,
     values: [],
     stats: [],
   };

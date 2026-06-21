@@ -39,7 +39,20 @@ const baseSettings: SiteSettingsOutput = {
     email: 'a@b.com',
     phone: null,
     location: null,
+    address: null,
+    workHours: null,
     showForm: true,
+  },
+  theme: {
+    brandColor: null,
+  },
+  about: {
+    brief: localizedText('About', 'Тухай'),
+    mission: localizedText('Mission', 'Зорилго'),
+    vision: localizedText('Vision', 'Алсын хараа'),
+    imageUrl: null,
+    values: [],
+    stats: [],
   },
 };
 
@@ -48,6 +61,7 @@ describe('toSiteSettingsFormValues', () => {
     const values = toSiteSettingsFormValues(baseSettings);
 
     expect(values.hero.imageUrl).toBe('');
+    expect(values.about.imageUrl).toBe('');
     expect(values.header.logoUrl).toBe('');
     expect(values.header.logoDarkUrl).toBe('');
     expect(values.header.adminLogoUrl).toBe('');

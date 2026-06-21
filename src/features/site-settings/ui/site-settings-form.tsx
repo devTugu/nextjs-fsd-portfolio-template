@@ -111,6 +111,10 @@ export function SiteSettingsForm() {
           address: normalizedAddress,
           workHours: normalizedWorkHours,
         },
+        about: {
+          ...values.about,
+          imageUrl: normalizeUrl(values.about.imageUrl),
+        },
       });
       toast.success(t('toastSaved'));
     } catch (error) {
@@ -248,6 +252,12 @@ export function SiteSettingsForm() {
                   label={t('aboutBrief')}
                   disabled={!canUpdate}
                   rows={3}
+                />
+                <MediaUploadField
+                  control={form.control}
+                  name="about.imageUrl"
+                  label={t('aboutImageUrl')}
+                  disabled={!canUpdate}
                 />
                 <LocalizedTextareaField
                   control={form.control}

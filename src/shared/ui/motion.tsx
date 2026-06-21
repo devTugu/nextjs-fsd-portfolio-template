@@ -1,8 +1,9 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { motion, useReducedMotion, type HTMLMotionProps } from 'framer-motion';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 import { useIsMounted } from '@/shared/hooks/use-is-mounted';
+import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion';
 
 const fadeInVariants = {
   hidden: { opacity: 0, y: 8 },
@@ -21,7 +22,7 @@ export const FadeIn = ({
   ...props
 }: FadeInProps) => {
   const mounted = useIsMounted();
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   if (!mounted || prefersReducedMotion) {
     return <div className={className}>{children}</div>;

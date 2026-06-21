@@ -1,6 +1,8 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { useIsMounted } from '@/shared/hooks/use-is-mounted';
+import { usePrefersReducedMotion } from '@/shared/hooks/use-prefers-reduced-motion';
 
 interface PageTransitionProps {
   children: React.ReactNode;
@@ -8,9 +10,10 @@ interface PageTransitionProps {
 }
 
 export const PageTransition = ({ children, className }: PageTransitionProps) => {
-  const prefersReducedMotion = useReducedMotion();
+  const mounted = useIsMounted();
+  const prefersReducedMotion = usePrefersReducedMotion();
 
-  if (prefersReducedMotion) {
+  if (!mounted || prefersReducedMotion) {
     return <div className={className}>{children}</div>;
   }
 

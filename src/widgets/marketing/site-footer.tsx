@@ -38,7 +38,7 @@ export async function SiteFooter({ footer, siteName, footerTree }: SiteFooterPro
       />
       <Section className="relative py-16 md:py-20">
         <Container>
-          <div className="grid gap-10 lg:grid-cols-[1.2fr_repeat(4,1fr)]">
+          <div className="grid gap-10 lg:grid-cols-4">
             <div className="space-y-4">
               <p className="text-lg font-semibold">{siteName}</p>
               {tagline ? (

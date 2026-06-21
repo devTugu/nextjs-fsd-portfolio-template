@@ -373,6 +373,7 @@
       "heroImageUrl": "Hero зургийн URL",
       "aboutSectionTitle": "About",
       "aboutBrief": "Товч",
+      "aboutImageUrl": "About зургийн URL",
       "aboutMission": "Эрхэм зорилго",
       "aboutVision": "Алсын хараа",
       "themeSectionTitle": "Theme",
@@ -673,9 +674,6 @@
       "description": "Манай брэнд, үйлчилгээний талаар холбогдоорой.",
       "button": "Холбоо барих",
       "brandsButton": "Брэндүүд үзэх"
-    },
-    "logos": {
-      "title": "Энэ platform-ыг ажиллуулж буй технологиуд"
     },
     "contact": {
       "title": "Холбоо барих",

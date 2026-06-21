@@ -25,7 +25,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroSection hero={hero} />
+      <HeroSection hero={hero} brandColor={settings?.theme?.brandColor} />
       <AboutBriefSection about={about} className="bg-muted/20" />
       <BrandsShowcaseSection brands={brands} />
       <NewsPreviewSection posts={news.items} className="bg-muted/20" />

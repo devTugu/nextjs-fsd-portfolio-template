@@ -373,6 +373,7 @@
       "heroImageUrl": "Hero image URL",
       "aboutSectionTitle": "About",
       "aboutBrief": "Brief",
+      "aboutImageUrl": "About image URL",
       "aboutMission": "Mission",
       "aboutVision": "Vision",
       "themeSectionTitle": "Theme",
@@ -673,9 +674,6 @@
       "description": "Contact us to learn more about our brands and services.",
       "button": "Contact us",
       "brandsButton": "Explore brands"
-    },
-    "logos": {
-      "title": "Built with the technologies powering this platform"
     },
     "contact": {
       "title": "Contact",

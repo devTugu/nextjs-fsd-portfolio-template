@@ -100,15 +100,6 @@ export async function ContactSection({ contactInfo }: ContactSectionProps) {
 
   return (
     <Section className="relative min-h-[70vh] overflow-hidden pt-12 pb-24 md:pt-16">
-      <div
-        aria-hidden
-        className="absolute inset-0 opacity-50"
-        style={{
-          backgroundImage:
-            'linear-gradient(to right, var(--marketing-grid-line) 1px, transparent 1px)',
-          backgroundSize: '4rem 100%',
-        }}
-      />
       <GradientRibbon className="bottom-0 h-[320px] opacity-80" />
       <Container className="relative">
         <div className="grid gap-10 lg:grid-cols-[1fr_320px] lg:items-start">

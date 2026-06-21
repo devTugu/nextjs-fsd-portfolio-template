@@ -3,6 +3,8 @@ import { getLocale } from 'next-intl/server';
 import { withHeaderNavFallback } from '@/entities/navigation';
 import { getPublicNavigation, getPublicSiteSettings } from '@/entities/public-api';
 import { resolveBrandContext } from '@/shared/config/brand';
+import { buildBrandHeroPalette, toMarketingMeshCssVars } from '@/shared/lib/marketing/brand-hero-palette';
+import { normalizeHexColor } from '@/shared/lib/normalize-hex-color';
 import type { Locale } from '@/shared/i18n/config';
 import { pickLocalized, pickLocalizedList } from '@/shared/lib/pick-localized';
 import { hasServerSession } from '@/shared/lib/server-session';
@@ -64,17 +66,13 @@ export default async function MarketingLayout({
     tagline: { en: '', mn: '' },
     socialLinks: [],
   };
+  const brandColor = normalizeHexColor(settings?.theme?.brandColor);
+  const heroPalette = buildBrandHeroPalette(brandColor);
 
   return (
     <div
-      className="flex min-h-svh flex-col"
-      style={
-        settings?.theme?.brandColor
-          ? ({
-              '--marketing-indigo': settings.theme.brandColor,
-            } as React.CSSProperties)
-          : undefined
-      }
+      className="relative flex min-h-svh flex-col"
+      style={toMarketingMeshCssVars(heroPalette, brandColor) as React.CSSProperties}
     >
       <MarketingSiteHeader
         siteName={brand.siteName}
@@ -83,7 +81,7 @@ export default async function MarketingLayout({
         headerTree={headerTree}
         hasSession={hasSession}
       />
-      <main className="flex-1">{children}</main>
+      <main className="relative z-[2] flex-1">{children}</main>
       <SiteFooter footer={footer} siteName={brand.siteName} footerTree={footerNav} />
     </div>
   );

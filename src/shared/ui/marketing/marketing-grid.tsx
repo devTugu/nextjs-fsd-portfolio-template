@@ -1,53 +1,35 @@
 import { cn } from '@/shared/lib/utils';
+import {
+  MarketingLayoutCell as LayoutCell,
+  MarketingLayoutGrid as LayoutGrid,
+} from './layout';
 
-interface MarketingGridProps {
-  className?: string;
-  children: React.ReactNode;
-  showDividers?: boolean;
-}
-
+/** @deprecated Use `MarketingLayoutGrid` from `@/shared/ui/marketing/layout`. */
 export function MarketingGrid({
   className,
   children,
-  showDividers = true,
-}: MarketingGridProps) {
-  return (
-    <div
-      className={cn(
-        'relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
-        showDividers &&
-          'md:divide-border/60 md:divide-x lg:[&>*:not(:last-child)]:border-r lg:[&>*:not(:last-child)]:border-border/60',
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-interface MarketingGridCellProps {
+}: {
   className?: string;
   children: React.ReactNode;
-  span?: 1 | 2 | 3 | 4;
+  /** @deprecated Dividers are handled by MarketingColumnGrid overlay. */
+  showDividers?: boolean;
+}) {
+  return <LayoutGrid className={className}>{children}</LayoutGrid>;
 }
 
+/** @deprecated Use `MarketingLayoutCell` from `@/shared/ui/marketing/layout`. */
 export function MarketingGridCell({
   className,
   children,
   span = 1,
-}: MarketingGridCellProps) {
-  const spanClass =
-    span === 2
-      ? 'lg:col-span-2'
-      : span === 3
-        ? 'lg:col-span-3'
-        : span === 4
-          ? 'lg:col-span-4'
-          : '';
-
+}: {
+  className?: string;
+  children: React.ReactNode;
+  span?: 1 | 2 | 3 | 4;
+}) {
   return (
-    <div className={cn('relative px-4 py-8 md:px-6 lg:px-4', spanClass, className)}>
+    <LayoutCell colSpan={span} className={cn('px-4 py-8 md:px-6 lg:px-4', className)}>
       {children}
-    </div>
+    </LayoutCell>
   );
 }

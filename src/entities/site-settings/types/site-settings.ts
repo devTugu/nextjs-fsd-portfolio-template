@@ -67,6 +67,7 @@ export interface SiteSettingsAbout {
   brief: LocalizedText;
   mission: LocalizedText;
   vision: LocalizedText;
+  imageUrl: string | null;
   values: SiteSettingsAboutValue[];
   stats: SiteSettingsAboutStat[];
 }

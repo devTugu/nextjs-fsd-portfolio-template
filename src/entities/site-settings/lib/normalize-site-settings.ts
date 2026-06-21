@@ -50,6 +50,7 @@ const DEFAULT_SITE_SETTINGS: SiteSettingsOutput = {
     brief: emptyLocalizedText(),
     mission: emptyLocalizedText(),
     vision: emptyLocalizedText(),
+    imageUrl: null,
     values: [],
     stats: [],
   },
@@ -85,6 +86,7 @@ export function normalizeSiteSettings(
     about: {
       ...DEFAULT_SITE_SETTINGS.about,
       ...raw.about,
+      imageUrl: raw.about?.imageUrl ?? null,
       values: raw.about?.values ?? [],
       stats: raw.about?.stats ?? [],
     },

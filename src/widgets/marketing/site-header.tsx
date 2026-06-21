@@ -10,7 +10,7 @@ import { PUBLIC_ROUTES, ROUTES } from '@/shared/config/routes';
 import type { Locale } from '@/shared/i18n/config';
 import { LocaleSwitcher } from '@/shared/i18n/locale-switcher';
 import { Button } from '@/shared/ui/button';
-import { Container, MarketingButton } from '@/shared/ui/marketing';
+import { Container, MarketingButton, MarketingLayoutGrid } from '@/shared/ui/marketing';
 import { ThemeToggle } from '@/shared/ui/theme-toggle';
 import { MegaNavigationMenu } from '@/widgets/marketing/mega-navigation-menu';
 import { BrandLogo } from '@/shared/ui/brand-logo';
@@ -61,8 +61,8 @@ export function SiteHeader({
           : 'border-border/60 bg-background/95 border-b shadow-sm backdrop-blur-md',
       )}
     >
-      <Container>
-        <div className="flex h-16 items-center gap-4">
+      <MarketingLayoutGrid>
+        <div className="col-span-1 flex h-16 items-center gap-4 lg:col-span-4">
           <Link
             href={PUBLIC_ROUTES.HOME}
             className="shrink-0 text-lg font-semibold tracking-tight"
@@ -120,7 +120,7 @@ export function SiteHeader({
             {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </Button>
         </div>
-      </Container>
+      </MarketingLayoutGrid>
 
       {mobileOpen ? (
         <MobileNav
@@ -153,16 +153,18 @@ function MobileNav({
 }) {
   return (
     <div className="border-border/60 bg-background border-t shadow-lg lg:hidden">
-      <Container className="py-6">
-        <MobileNavContent
+      <MarketingLayoutGrid className="py-6">
+        <div className="col-span-1 lg:col-span-4">
+          <MobileNavContent
           authHref={authHref}
           authLabel={authLabel}
           headerTree={headerTree}
           locale={locale}
           onClose={onClose}
           t={t}
-        />
-      </Container>
+          />
+        </div>
+      </MarketingLayoutGrid>
     </div>
   );
 }
