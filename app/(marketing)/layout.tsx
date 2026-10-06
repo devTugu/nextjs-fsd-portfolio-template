@@ -71,6 +71,7 @@ export default async function MarketingLayout({
 
   return (
     <div
+      data-marketing-theme-root
       className="relative flex min-h-svh flex-col"
       style={toMarketingMeshCssVars(heroPalette, brandColor) as React.CSSProperties}
     >

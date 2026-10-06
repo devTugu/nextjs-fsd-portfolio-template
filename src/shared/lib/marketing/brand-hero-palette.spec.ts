@@ -31,4 +31,14 @@ describe('buildBrandHeroPalette', () => {
     expect(vars['--marketing-mesh-color-4']).toMatch(/^#[0-9A-F]{6}$/);
     expect(vars['--marketing-indigo']).toBe('#E11D48');
   });
+
+  it('exports wave ribbon CSS variables derived from brand color', () => {
+    const palette = buildBrandHeroPalette('#E11D48');
+    const vars = toMarketingMeshCssVars(palette, '#E11D48');
+
+    expect(vars['--marketing-wave-warm-start']).toMatch(/^#[0-9A-F]{6}$/);
+    expect(vars['--marketing-wave-warm-mid']).toMatch(/^#[0-9A-F]{6}$/);
+    expect(vars['--marketing-wave-cool-end']).toMatch(/^#[0-9A-F]{6}$/);
+    expect(palette.waveWarmStops[1]).not.toBe(palette.waveWarmStops[3]);
+  });
 });

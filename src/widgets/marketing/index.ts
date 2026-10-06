@@ -3,6 +3,7 @@ export { MarketingSiteHeader } from './marketing-site-header';
 export { SiteFooter } from './site-footer';
 export { HeroSection } from './hero-section';
 export { AboutBriefSection } from './about-brief-section';
+export { WaveStatsSection } from './wave-stats-section';
 export { BrandsShowcaseSection } from './brands-showcase-section';
 export { NewsPreviewSection } from './news-preview-section';
 export { ContactCtaSection } from './contact-cta-section';

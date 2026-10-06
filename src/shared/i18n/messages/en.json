@@ -607,6 +607,24 @@
       "teamTitle": "Our team",
       "teamDescription": "The team behind our brands."
     },
+    "waveStats": {
+      "title": "Scale with confidence.",
+      "description": "Manage restaurants, events, and hospitality brands from one CMS — RBAC, audit logs, localized content, and public APIs included.",
+      "stats": {
+        "brands": {
+          "value": "12+",
+          "label": "brands in one group"
+        },
+        "locales": {
+          "value": "2+",
+          "label": "localized languages"
+        },
+        "uptime": {
+          "value": "99.9%",
+          "label": "production-ready foundation"
+        }
+      }
+    },
     "brands": {
       "title": "Our brands",
       "description": "Restaurants and events managed from the admin panel.",

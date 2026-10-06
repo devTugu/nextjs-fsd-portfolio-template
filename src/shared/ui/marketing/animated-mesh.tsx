@@ -12,9 +12,15 @@ import { meshBandClipStyle, meshBandShellClassName } from './mesh-band-layout';
 interface AnimatedMeshProps {
   className?: string;
   gradientColors?: readonly string[];
+  /** `hero-band` clips like the landing hero; `fill` covers the parent box. */
+  variant?: 'hero-band' | 'fill';
 }
 
-export function AnimatedMesh({ className, gradientColors }: AnimatedMeshProps) {
+export function AnimatedMesh({
+  className,
+  gradientColors,
+  variant = 'hero-band',
+}: AnimatedMeshProps) {
   const mounted = useIsMounted();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -79,9 +85,17 @@ export function AnimatedMesh({ className, gradientColors }: AnimatedMeshProps) {
     };
   }, [showCanvas, colorsKey]);
 
+  const shellClassName =
+    variant === 'fill'
+      ? 'pointer-events-none absolute inset-0 overflow-hidden'
+      : meshBandShellClassName;
+
   return (
-    <div aria-hidden className={cn(meshBandShellClassName, className)}>
-      <div className="absolute inset-0" style={meshBandClipStyle}>
+    <div aria-hidden className={cn(shellClassName, className)}>
+      <div
+        className="absolute inset-0"
+        style={variant === 'fill' ? undefined : meshBandClipStyle}
+      >
         <GradientMeshBlobs />
         {showCanvas ? (
           <div ref={containerRef} className="absolute inset-0">

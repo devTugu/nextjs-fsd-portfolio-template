@@ -10,6 +10,7 @@ import {
   ContactCtaSection,
   HeroSection,
   NewsPreviewSection,
+  WaveStatsSection,
 } from '@/widgets/marketing';
 
 export default async function HomePage() {
@@ -27,6 +28,7 @@ export default async function HomePage() {
     <>
       <HeroSection hero={hero} brandColor={settings?.theme?.brandColor} />
       <AboutBriefSection about={about} className="bg-muted/20" />
+      <WaveStatsSection />
       <BrandsShowcaseSection brands={brands} />
       <NewsPreviewSection posts={news.items} className="bg-muted/20" />
       <ContactCtaSection contactInfo={settings?.contactInfo} />

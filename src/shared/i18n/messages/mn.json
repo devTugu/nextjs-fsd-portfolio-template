@@ -607,6 +607,24 @@
       "teamTitle": "Манай баг",
       "teamDescription": "Брэндүүдийн ард байгаа баг."
     },
+    "waveStats": {
+      "title": "Итгэлтэйгээр өргөжүүл.",
+      "description": "Ресторан, event, зочлох үйлчилгээний брэндүүдийг нэг CMS-ээс удирдаарай — RBAC, audit log, олон хэл, public API багтсан.",
+      "stats": {
+        "brands": {
+          "value": "12+",
+          "label": "нэг групп дахь брэнд"
+        },
+        "locales": {
+          "value": "2+",
+          "label": "хэл дэмжлэг"
+        },
+        "uptime": {
+          "value": "99.9%",
+          "label": "production-ready суурь"
+        }
+      }
+    },
     "brands": {
       "title": "Манай брэндүүд",
       "description": "Admin panel-аас удирддаг ресторан болон event брэндүүд.",

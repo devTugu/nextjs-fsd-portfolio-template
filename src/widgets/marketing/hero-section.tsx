@@ -12,7 +12,6 @@ import {
   AnimatedMesh,
   MarketingButton,
   MarketingColumnGrid,
-  MarketingGridPattern,
   MarketingLayoutCell,
   MarketingLayoutGrid,
   MarketingLayoutMedia,
@@ -75,7 +74,6 @@ export async function HeroSection({ hero, brandColor }: HeroSectionProps) {
       showGridPattern={false}
       className="relative -mt-16 min-h-svh pt-16 pb-0"
     >
-      <MarketingGridPattern className="z-[1]" />
       <MarketingColumnGrid className="z-[1]" />
       <AnimatedMesh className="z-[2]" gradientColors={heroPalette.stripeColors} />
 

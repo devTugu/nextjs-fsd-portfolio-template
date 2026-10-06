@@ -6,6 +6,10 @@ export interface BrandHeroPalette {
   heroGradient: string;
   ribbonGradient: string;
   violet: string;
+  /** Canvas ribbon warm strand stops (left → right). */
+  waveWarmStops: readonly [string, string, string, string];
+  /** Canvas ribbon cool strand stops (left → right). */
+  waveCoolStops: readonly [string, string, string];
 }
 
 interface Rgb {
@@ -158,11 +162,26 @@ export function buildBrandHeroPalette(
     0.58,
   )} 100%)`;
 
+  const waveWarmStops: [string, string, string, string] = [
+    shiftBrandColor(brand, -22, 0.82, 32),
+    shiftBrandColor(brand, -6, 0.95, 18),
+    shiftBrandColor(brand, 18, 1.05, 8),
+    shiftBrandColor(brand, 44, 1, 2),
+  ];
+
+  const waveCoolStops: [string, string, string] = [
+    shiftBrandColor(brand, -38, 0.88, -8),
+    shiftBrandColor(brand, -10, 0.92, 6),
+    shiftBrandColor(brand, 32, 0.95, 14),
+  ];
+
   return {
     stripeColors,
     heroGradient,
     ribbonGradient,
     violet: shiftBrandColor(brand, 18, 1.05, 10),
+    waveWarmStops,
+    waveCoolStops,
   };
 }
 
@@ -179,6 +198,12 @@ export function toMarketingMeshCssVars(
     '--marketing-violet': palette.violet,
     '--marketing-hero-gradient': palette.heroGradient,
     '--marketing-ribbon-gradient': palette.ribbonGradient,
+    '--marketing-wave-warm-start': palette.waveWarmStops[0],
+    '--marketing-wave-warm-mid': palette.waveWarmStops[1],
+    '--marketing-wave-warm-end': palette.waveWarmStops[3],
+    '--marketing-wave-cool-start': palette.waveCoolStops[0],
+    '--marketing-wave-cool-mid': palette.waveCoolStops[1],
+    '--marketing-wave-cool-end': palette.waveCoolStops[2],
   };
 
   if (brandColor) {
